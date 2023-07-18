@@ -14,6 +14,7 @@
 - [Get Models of a Team](#get-models-of-a-team)
 - [Get Match by MatchID](#get-match-by-matchid)
 - [Get Model by ModelID](#get-model-by-modelid)
+- [Running API](#starting-the-server)
 
 ## Endpoints
 
