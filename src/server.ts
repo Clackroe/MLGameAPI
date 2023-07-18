@@ -7,8 +7,6 @@ const port = 3000; // default port to listen
 import * as db from "./db";
 import { insertMockData, insertMatches } from "./mockData";
 
-app.use("/api");
-
 // Middleware to handle async errors
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   console.error("Error in the main function:", err);
@@ -167,11 +165,6 @@ app.get("/models/:modelID", async (req, res, next) => {
   } catch (error) {
     next(error);
   }
-});
-
-// Error handler for routes that are not found
-app.use((req, res, next) => {
-  res.status(404).send("Not Found");
 });
 
 // Error handler for all other errors
