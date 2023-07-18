@@ -52,3 +52,78 @@ export async function getModelsFromTeamID(teamID: string) {
 
   return models;
 }
+
+export async function getTeamIDFromUserName(name: string) {
+  const user = await prisma.user.findUnique({
+    where: {
+      discord_id: name,
+    } || {
+      epic_id: name,
+    },
+  });
+
+  return user.team_id;
+}
+
+export async function getUserFromID(id: string) {
+  const user = await prisma.user.findUnique({
+    where: {
+      id,
+    },
+  });
+
+  return user;
+}
+
+export async function getAllTeamIDs() {
+  const teams = await prisma.team.findMany();
+  const teamIDs: string[] = [];
+
+  teams.forEach((team) => {
+    teamIDs.push(team.id);
+  });
+
+  return teamIDs;
+}
+
+export async function getAllUserIDs() {
+  const users = await prisma.user.findMany();
+  const userIDs: string[] = [];
+
+  users.forEach((user) => {
+    userIDs.push(user.id);
+  });
+
+  return userIDs;
+}
+
+export async function getAllMatchIDs() {
+  const matches = await prisma.match.findMany();
+  const matchIDs: string[] = [];
+
+  matches.forEach((match) => {
+    matchIDs.push(match.id);
+  });
+
+  return matchIDs;
+}
+
+export async function getMatchFromID(id: string) {
+  const match = await prisma.match.findUnique({
+    where: {
+      id,
+    },
+  });
+
+  return match;
+}
+
+export async function getModelFromID(id: string) {
+  const model = await prisma.model.findUnique({
+    where: {
+      id,
+    },
+  });
+
+  return model;
+}
