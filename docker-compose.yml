@@ -1,0 +1,15 @@
+version: "3"
+services:
+  api:
+    image: ml-game-api
+    build: .
+    networks:
+      - backend
+    ports:
+      - "6001:3000"
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+
+networks:
+  backend:
+    driver: bridge
