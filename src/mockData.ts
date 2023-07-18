@@ -32,7 +32,7 @@ export async function insertMockData() {
     await prisma.team.create({
       data: {
         id: teamId,
-        name: `Team ${i}_Name`,
+        name: `Team_${i}_Name`,
         //  players: {
         //    connect: teamPlayerIds.map((playerId) => ({ id: playerId })),
         //  },
@@ -102,6 +102,7 @@ export async function insertMatches() {
         team_2: team2.id,
         team_1_model: team1Model,
         team_2_model: team2Model,
+        type: "Casual",
         timestamp: new Date(),
         team_1_score: Math.floor(Math.random() * 10),
         team_2_score: Math.floor(Math.random() * 10),

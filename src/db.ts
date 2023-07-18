@@ -1,18 +1,28 @@
-import { PrismaClient } from "@prisma/client";
-const prisma = new PrismaClient();
+import * as utils from "./utils";
 
-export async function getAllTeams() {
-  const allTeams = await prisma.user.findMany();
-  // console.log(allTeams);
-  return allTeams;
-}
+export async function getTeam(teamName: string) {
+  const team = await utils.getTeamFromName(teamName);
+  const teamID = team.id;
 
-export function getTeam(teamName: string) {
-  const team = prisma.team.findUnique({
-    where: {
-      id: teamName,
-    },
-  });
+  const users = await utils.getUsersFromTeamID(teamID);
+  const numUsers = users.length;
 
-  return team;
+  const matches = await utils.getMatchesFromTeamID(teamID);
+  const numMatches = matches.length;
+
+  const models = await utils.getModelsFromTeamID(teamID);
+  const numModels = models.length;
+
+  const teamOut = {
+    teamName: team.name,
+    teamID: team.id,
+    numUsers,
+    numMatches,
+    numModels,
+    users,
+    matches,
+    models,
+  };
+
+  return teamOut;
 }
