@@ -1,8 +1,9 @@
 import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
-export function getAllTeams() {
-  const allTeams = prisma.team.findMany();
+export async function getAllTeams() {
+  const allTeams = await prisma.user.findMany();
+  // console.log(allTeams);
   return allTeams;
 }
 

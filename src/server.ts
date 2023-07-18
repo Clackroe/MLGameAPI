@@ -3,19 +3,23 @@ const app = express();
 const port = 3000; // default port to listen
 
 import { getAllTeams, getTeam } from "./db";
-import { insertMockData } from "./mockData";
+import { insertMockData, insertMatches } from "./mockData";
 
-app.get("/", async (req, res) => {
+//Create and insert the mock data
+app.get("/insertMockData", async (req, res) => {
   try {
     await insertMockData();
+    await insertMatches();
     res.send("Done!");
   } catch (error) {
     console.error("Error in the main function:", error);
     res.send("Error!" + error);
   }
 });
-app.get("/allteams", (req, res) => {
-  const teams = getAllTeams();
+
+//Get all teams
+app.get("/allteams", async (req, res) => {
+  const teams = await getAllTeams();
   if (teams) {
     res.send(teams);
   } else {
@@ -23,6 +27,7 @@ app.get("/allteams", (req, res) => {
   }
 });
 
+//Get a specific team based on teamID
 app.get("/teams/:teamID", (req, res) => {
   const teamRes = getTeam(req.params.teamID);
 

@@ -2,7 +2,6 @@ generator client {
   provider = "prisma-client-js"
 }
 
-
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
@@ -41,7 +40,8 @@ model model {
 
 model team {
   id                                String   @id @db.Uuid
-  players                           String[] @db.Uuid
+  // players                           String[] @db.Uuid
+  name                              String  @db.VarChar(255)
   match_match_team_1Toteam          match[]  @relation("match_team_1Toteam")
   match_match_team_2Toteam          match[]  @relation("match_team_2Toteam")
   match_match_winning_team_idToteam match[]  @relation("match_winning_team_idToteam")
