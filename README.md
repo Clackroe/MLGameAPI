@@ -14,7 +14,8 @@
 - [Get Models of a Team](#get-models-of-a-team)
 - [Get Match by MatchID](#get-match-by-matchid)
 - [Get Model by ModelID](#get-model-by-modelid)
-- [Running API](#starting-the-server)
+- [Starting API](#starting-the-server)
+- [Using Docker](#using-docker)
 
 ## Endpoints
 
@@ -149,11 +150,45 @@ If an endpoint is not found (404), the server will return a "Not Found" message 
 For all other errors, an internal server error (500) will be returned along with an error message.
 
 ## Starting the Server
+Clone this repo
+```bash
+git clone https://github.com/Clackroe/MLGameAPI
+```
 
+Next add your database url to .env.example and rename to .env
+
+Install dependencies 
+```bash
+npm install
+```
 To start the server, run the following command:
-
 ```bash
 npm run start
 ```
 
 The server will be accessible at `http://localhost:3000`, assuming the default port (3000) is used.
+
+### Using Docker
+
+  Make sure you have docker-compose installed on your machine.
+
+ Clone this repo
+  ```bash
+  git clone https://github.com/Clackroe/MLGameAPI
+  ```
+  Next add your database url to .env.example and rename to .env
+
+  Build the image:
+  ```bash
+  docker-compose build
+  ```
+  Run the container:
+  ```bash
+  docker-compose up -d
+  ```
+  The api will now be running on localhost:6001
+  
+  
+  
+  
+  
