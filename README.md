@@ -1,8 +1,5 @@
 # Express JS API Endpoints Documentation
 
-This markdown file documents the API endpoints of an Express.js application. The application provides various endpoints to interact with a database containing information about teams, users, matches, and models.
-
-**Note:** The API assumes the usage of the `express-async-errors` middleware for handling asynchronous errors. Additionally, it relies on a database module (`./db`) and mock data module (`./mockData`) for data operations and inserting mock data.
 
 ## Table of Contents
 
