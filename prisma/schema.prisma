@@ -8,44 +8,44 @@ datasource db {
 }
 
 model match {
-  id                                  String    @id @db.Uuid
-  team_1                              String    @db.Uuid
-  team_1_model                        String    @db.Uuid
-  team_2                              String    @db.Uuid
-  team_2_model                        String    @db.Uuid
-  type                                String    @db.VarChar(255)
-  timestamp                           DateTime? @db.Timestamp(6)
-  team_1_score                        Int?
-  team_2_score                        Int?
-  winning_team_id                     String?   @db.Uuid
-  winning_model_id                    String?   @db.Uuid
-  team_match_team_1Toteam             team      @relation("match_team_1Toteam", fields: [team_1], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  model_match_team_1_modelTomodel     model     @relation("match_team_1_modelTomodel", fields: [team_1_model], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  team_match_team_2Toteam             team      @relation("match_team_2Toteam", fields: [team_2], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  model_match_team_2_modelTomodel     model     @relation("match_team_2_modelTomodel", fields: [team_2_model], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  team_match_winning_team_idToteam    team?     @relation("match_winning_team_idToteam", fields: [winning_team_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "match_winner_fkey")
-  model_match_winning_model_idTomodel model?    @relation("match_winning_model_idTomodel", fields: [winning_model_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "match_winning_model_fkey")
+  id               String    @id @db.Uuid
+  team_1           String    @db.Uuid
+  team_1_model     String    @db.Uuid
+  team_2           String    @db.Uuid
+  team_2_model     String    @db.Uuid
+  type             String    @db.VarChar(255)
+  timestamp        DateTime? @db.Timestamp(6)
+  team_1_score     Int?
+  team_2_score     Int?
+  winning_team_id  String?   @db.Uuid
+  winning_model_id String?   @db.Uuid
+  team1            team      @relation("matchesAsTeam1", fields: [team_1], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  modelAsTeam1     model     @relation("matchesAsTeam1", fields: [team_1_model], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  team2            team      @relation("matchesAsTeam2", fields: [team_2], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  modelAsTeam2     model     @relation("matchesAsTeam2", fields: [team_2_model], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  winningTeam      team?     @relation("matchesAsWinningModel", fields: [winning_team_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "match_winner_fkey")
+  winningModel     model?    @relation("matchesAsWinningModel", fields: [winning_model_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "match_winning_model_fkey")
 }
 
 model model {
-  id                                  String  @id @db.Uuid
-  team_id                             String  @db.Uuid
-  name                                String  @db.VarChar(255)
-  url                                 String  @db.VarChar(255)
-  match_match_team_1_modelTomodel     match[] @relation("match_team_1_modelTomodel")
-  match_match_team_2_modelTomodel     match[] @relation("match_team_2_modelTomodel")
-  match_match_winning_model_idTomodel match[] @relation("match_winning_model_idTomodel")
-  team                                team    @relation(fields: [team_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_model_team_id")
+  id                    String  @id @db.Uuid
+  team_id               String  @db.Uuid
+  name                  String  @db.VarChar(255)
+  url                   String  @db.VarChar(255)
+  matchesAsTeam1        match[] @relation("matchesAsTeam1")
+  matchesAsTeam2        match[] @relation("matchesAsTeam2")
+  matchesAsWinningModel match[] @relation("matchesAsWinningModel")
+  team                  team    @relation(fields: [team_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_model_team_id")
 }
 
 model team {
-  id                                String  @id @db.Uuid
-  name                              String  @unique @db.VarChar(255)
-  match_match_team_1Toteam          match[] @relation("match_team_1Toteam")
-  match_match_team_2Toteam          match[] @relation("match_team_2Toteam")
-  match_match_winning_team_idToteam match[] @relation("match_winning_team_idToteam")
-  models                            model[]
-  user                              user[]
+  id                    String  @id @db.Uuid
+  name                  String  @unique @db.VarChar(255)
+  matchesAsTeam1        match[] @relation("matchesAsTeam1")
+  matchesAsTeam2        match[] @relation("matchesAsTeam2")
+  matchesAsWinningModel match[] @relation("matchesAsWinningModel")
+  users                 user[]
+  models                model[]
 }
 
 model user {

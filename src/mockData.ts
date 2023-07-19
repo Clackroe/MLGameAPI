@@ -1,4 +1,4 @@
-import { PrismaClient, Prisma } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 import { v4 as uuidv4 } from "uuid";
@@ -28,7 +28,7 @@ export async function insertMockData() {
   for (let i = 0; i < 5; i++) {
     const teamId = uuidv4(); // Generate a random UUID for the team
     teamIds.push(teamId);
-    const teamPlayerIds = playerIds.slice(i * 3, i * 3 + 3); // Get player UUIDs for this team
+    // const teamPlayerIds = playerIds.slice(i * 3, i * 3 + 3); // Get player UUIDs for this team
     await prisma.team.create({
       data: {
         id: teamId,

@@ -1,177 +1,324 @@
 import "express-async-errors";
-import { NextFunction, Request, Response, Router } from "express";
+import { NextFunction, Request, Response } from "express";
 import express from "express";
+import { v4 as uuidv4 } from "uuid";
 const app = express();
 const port = 3000; // default port to listen
 
 import * as db from "./db";
-import { insertMockData, insertMatches } from "./mockData";
+// import { insertMockData, insertMatches } from "./mockData";
 
-// Middleware to handle async errors
-app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
-  console.error("Error in the main function:", err);
-  res.status(500).send("Internal Server Error");
-});
+function errorHandler(
+  err: Error,
+  req: Request,
+  res: Response,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  next: NextFunction
+) {
+  console.error(err.stack);
+  res.status(500).send({
+    error: "Something Went Wrong!",
+    name: err.name,
+    message: err.message,
+  });
+}
 
-// Create and insert the mock data
-app.get("/insertMockData", async (req, res, next) => {
+//Teams Routes
+//get teams by name /teams?name={name}
+app.get("/teams", async (req: Request, res: Response, next: NextFunction) => {
   try {
-    await insertMockData();
-    await insertMatches();
-    res.send("Done!");
-  } catch (error) {
-    next(error);
-  }
-});
+    //get teams by name /teams?name={name}
+    const name = req.query.name as string;
+    if (name) {
+      const team = await db.getTeamByName(name);
 
-// Get all teams
-app.get("/all/teams", async (req, res, next) => {
-  try {
-    const allTeams = await db.getAllTeams();
-
-    if (allTeams) {
-      res.send(allTeams);
+      res.json({ team });
     } else {
-      res.send(`No teams found`);
+      const teams = await db.getAllTeams();
+
+      res.json({ teams });
     }
   } catch (error) {
     next(error);
   }
 });
 
-app.get("/all/users", async (req, res, next) => {
-  try {
-    const allUsers = await db.getAllUsers();
+app.get(
+  "/teams/:id",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const id = req.params.id;
+      const team = await db.getTeamById(id);
+      res.json({ team });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
 
-    if (allUsers) {
-      res.send(allUsers);
+app.post("/teams", async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    await db.createTeam({ id: uuidv4(), name: req.query.name as string });
+    res.json({ message: "Team Created" });
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.put(
+  "/teams/:id",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      await db.updateTeam(req.params.id, {
+        id: req.params.id as string,
+        name: req.query.name as string,
+      });
+      res.json({ message: "Team Updated" });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+app.delete(
+  "/teams/:id",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      await db.deleteTeam(req.params.id);
+      res.json({ message: "Team Deleted" });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+// //Users Routes
+// can also do EITHER /users?epic_id={epic_id} OR /users?discord_id={discord_id}
+app.get("/players", async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const epic_id = req.query.epic_id as string;
+    const discord_id = req.query.discord_id as string;
+    if (epic_id) {
+      const player = await db.getUserByEpicId(epic_id);
+      res.json({ player });
+    } else if (discord_id) {
+      const player = await db.getUserByDiscordId(discord_id);
+      res.json({ player });
     } else {
-      res.send(`No users found`);
+      const players = await db.getAllUsers();
+      res.json({ players });
     }
   } catch (error) {
     next(error);
   }
 });
 
-app.get("/all/matches", async (req, res, next) => {
-  try {
-    const allMatches = await db.getAllMatches();
+app.get(
+  "/players/:id",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const id = req.params.id;
+      const player = await db.getUserById(id);
+      res.json({ player });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
 
-    if (allMatches) {
-      res.send(allMatches);
+app.post(
+  "/players",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      await db.createUser({
+        id: uuidv4(),
+        name: req.query.name as string,
+        epic_id: req.query.epic_id as string,
+        discord_id: req.query.discord_id as string,
+        team_id: req.query.team_id as string,
+      });
+      res.json({ message: "Player Created" });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+app.put(
+  "/players/:id",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      await db.updateUser(req.params.id, {
+        id: req.params.id as string,
+        name: req.query.name as string,
+        epic_id: req.query.epic_id as string,
+        discord_id: req.query.discord_id as string,
+        team_id: req.query.team_id as string,
+      });
+      res.json({ message: "Player Updated" });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+app.delete(
+  "/players/:id",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      await db.deleteUser(req.params.id);
+      res.json({ message: "Player Deleted" });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+// //Matches Routes
+// Can also get matches by team_id /matches?team_id={team_id} or team_name /matches?team_name={team_name} or by model_id /matches?model_id={model_id}
+app.get("/matches", async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const team_id = req.query.team_id as string;
+    const team_name = req.query.team_name as string;
+    const model_id = req.query.model_id as string;
+    if (team_id) {
+      const matches = await db.getMatchesByTeamID(team_id);
+      res.json({ matches });
+    } else if (team_name) {
+      const matches = await db.getMatchesByTeamName(team_name);
+      res.json({ matches });
+    } else if (model_id) {
+      const matches = await db.getMatchesByModelID(model_id);
+      res.json({ matches });
     } else {
-      res.send(`No matches found`);
+      const matches = await db.getAllMatches();
+      res.json({ matches });
     }
   } catch (error) {
     next(error);
   }
 });
 
-// Get a specific user based on userID
-app.get("/users/:userID", async (req, res, next) => {
-  try {
-    const userRes = await db.getUser(req.params.userID);
-
-    if (userRes) {
-      res.send(userRes);
-    } else {
-      res.send(`User with id:${req.params.userID} found`);
+app.get(
+  "/matches/:id",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const id = req.params.id;
+      const match = await db.getMatchById(id);
+      res.json({ match });
+    } catch (error) {
+      next(error);
     }
-  } catch (error) {
-    next(error);
   }
-});
+);
 
-// Get a specific team based on teamID
-app.get("/teams/:teamName", async (req, res, next) => {
-  try {
-    const teamRes = await db.getTeam(req.params.teamName);
-
-    if (teamRes) {
-      res.send(teamRes);
-    } else {
-      res.send(`Team with id:${req.params.teamName} found`);
+app.post(
+  "/matches",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      await db.createMatch({
+        id: uuidv4(),
+        team_1: req.query.team_1_id as string,
+        team_2: req.query.team_2_id as string,
+        team_1_model: req.query.team_1_model_id as string,
+        team_2_model: req.query.team_2_model_id as string,
+        team_1_score: parseInt(req.query.team_1_score as string),
+        team_2_score: parseInt(req.query.team_2_score as string),
+        timestamp: new Date(req.query.timestamp as string),
+        type: req.query.type as string,
+        winning_team_id: req.query.winning_team_id as string,
+        winning_model_id: req.query.winning_model_id as string,
+      });
+      res.json({ message: "Match Created" });
+    } catch (error) {
+      next(error);
     }
-  } catch (error) {
-    next(error);
   }
-});
+);
 
-app.get("/teams/:teamName/users", async (req, res, next) => {
-  try {
-    const teamUsers = await db.getTeamUsers(req.params.teamName);
-
-    if (teamUsers) {
-      res.send(teamUsers);
-    } else {
-      res.send(`Team with id:${req.params.teamName} found`);
+app.put(
+  "/matches/:id",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      await db.updateMatch(req.params.id, {
+        id: req.params.id as string,
+        team_1: req.query.team_1_id as string,
+        team_2: req.query.team_2_id as string,
+        team_1_model: req.query.team_1_model_id as string,
+        team_2_model: req.query.team_2_model_id as string,
+        team_1_score: parseInt(req.query.team_1_score as string),
+        team_2_score: parseInt(req.query.team_2_score as string),
+        timestamp: new Date(req.query.timestamp as string),
+        type: req.query.type as string,
+        winning_team_id: req.query.winning_team_id as string,
+        winning_model_id: req.query.winning_model_id as string,
+      });
+      res.json({ message: "Match Updated" });
+    } catch (error) {
+      next(error);
     }
-  } catch (error) {
-    next(error);
   }
-});
+);
 
-app.get("/teams/:teamName/matches", async (req, res, next) => {
-  try {
-    const teamMatches = await db.getTeamMatches(req.params.teamName);
-
-    if (teamMatches) {
-      res.send(teamMatches);
-    } else {
-      res.send(`Team with id:${req.params.teamName} found`);
+app.delete(
+  "/matches/:id",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      await db.deleteMatch(req.params.id);
+      res.json({ message: "Match Deleted" });
+    } catch (error) {
+      next(error);
     }
-  } catch (error) {
-    next(error);
   }
-});
+);
 
-app.get("/teams/:teamName/models", async (req, res, next) => {
-  try {
-    const teamModels = await db.getTeamModels(req.params.teamName);
+// //Models Routes
 
-    if (teamModels) {
-      res.send(teamModels);
-    } else {
-      res.send(`Team with id:${req.params.teamName} found`);
-    }
-  } catch (error) {
-    next(error);
-  }
-});
+// app.get("/models", async (req: Request, res: Response, next: NextFunction) => {
+//   try {
+//   } catch (error) {
+//     next(error);
+//   }
+// });
 
-app.get("/matches/:matchID", async (req, res, next) => {
-  try {
-    const match = await db.getMatch(req.params.matchID);
+// app.get(
+//   "/models/:id",
+//   async (req: Request, res: Response, next: NextFunction) => {
+//     try {
+//     } catch (error) {
+//       next(error);
+//     }
+//   }
+// );
 
-    if (match) {
-      res.send(match);
-    } else {
-      res.send(`Match with id:${req.params.matchID} found`);
-    }
-  } catch (error) {
-    next(error);
-  }
-});
+// app.post("/models", async (req: Request, res: Response, next: NextFunction) => {
+//   try {
+//   } catch (error) {
+//     next(error);
+//   }
+// });
 
-app.get("/models/:modelID", async (req, res, next) => {
-  try {
-    const model = await db.getModel(req.params.modelID);
+// app.put(
+//   "/models/:id",
+//   async (req: Request, res: Response, next: NextFunction) => {
+//     try {
+//     } catch (error) {
+//       next(error);
+//     }
+//   }
+// );
 
-    if (model) {
-      res.send(model);
-    } else {
-      res.send(`Model with id:${req.params.modelID} found`);
-    }
-  } catch (error) {
-    next(error);
-  }
-});
+// app.delete(
+//   "/models/:id",
+//   async (req: Request, res: Response, next: NextFunction) => {
+//     try {
+//     } catch (error) {
+//       next(error);
+//     }
+//   }
+// );
 
-// Error handler for all other errors
-app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
-  console.error("Error in the main function:", err);
-  res.status(500).send("Internal Server Error");
-});
+app.use(errorHandler);
 
 // start server
 app.listen(port, () => {
