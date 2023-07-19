@@ -1,4 +1,4 @@
-# Express JS API Endpoints Documentation
+# API Endpoints Documentation
 
 
 ## Table of Contents
