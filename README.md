@@ -4,7 +4,7 @@ This document provides details on how to use the Express API provided for managi
 
 ## Table of Contents
 
-- [Docker](#Docker)
+- [Docker](#docker)
 - [Base URL](#base-url)
 - [Authentication](#authentication)
 - [Error Handling](#error-handling)
