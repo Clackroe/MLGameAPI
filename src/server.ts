@@ -65,7 +65,7 @@ app.get("/teams", async (req: Request, res: Response, next: NextFunction) => {
     if (name) {
       const team = await db.getTeamByName(name);
 
-      res.json({ team });
+      res.json(team);
     } else {
       const teams = await db.getAllTeams();
 
