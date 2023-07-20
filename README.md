@@ -8,7 +8,7 @@ The base URL for accessing the API is `http://localhost:3000`.
 
 ## Authentication
 
-The API requires a valid token to access its endpoints. Include the token in the `headers` of your requests. If the token is not provided or is invalid, the API will return a `401 Unauthorized` response.
+The API requires a valid token to access its endpoints. Include the "token" in the `headers` of your requests. If the token is not provided or is invalid, the API will return a `401 Unauthorized` response.
 
 ## Error Handling
 
