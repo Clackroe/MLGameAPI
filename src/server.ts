@@ -274,49 +274,80 @@ app.delete(
 
 // //Models Routes
 
-// app.get("/models", async (req: Request, res: Response, next: NextFunction) => {
-//   try {
-//   } catch (error) {
-//     next(error);
-//   }
-// });
+app.get("/models", async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const team_name = req.query.team_name as string;
+    const team_id = req.query.team_id as string;
+    if (team_name) {
+      const models = await db.getModelsByTeamName(team_name);
+      res.json({ models });
+    } else if (team_id) {
+      const models = await db.getModelsByTeamID(team_id);
+      res.json({ models });
+    } else {
+      const models = await db.getAllModels();
+      res.json({ models });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 
-// app.get(
-//   "/models/:id",
-//   async (req: Request, res: Response, next: NextFunction) => {
-//     try {
-//     } catch (error) {
-//       next(error);
-//     }
-//   }
-// );
+app.get(
+  "/models/:id",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const id = req.params.id;
+      const model = await db.getModelById(id);
+      res.json({ model });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
 
-// app.post("/models", async (req: Request, res: Response, next: NextFunction) => {
-//   try {
-//   } catch (error) {
-//     next(error);
-//   }
-// });
+app.post("/models", async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    await db.createModel({
+      id: uuidv4(),
+      name: req.query.name as string,
+      team_id: req.query.team_id as string,
+      url: req.query.url as string,
+    });
+    res.json({ message: "Model Created" });
+  } catch (error) {
+    next(error);
+  }
+});
 
-// app.put(
-//   "/models/:id",
-//   async (req: Request, res: Response, next: NextFunction) => {
-//     try {
-//     } catch (error) {
-//       next(error);
-//     }
-//   }
-// );
+app.put(
+  "/models/:id",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      await db.updateModel(req.params.id, {
+        id: req.params.id as string,
+        name: req.query.name as string,
+        team_id: req.query.team_id as string,
+        url: req.query.url as string,
+      });
+      res.json({ message: "Model Updated" });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
 
-// app.delete(
-//   "/models/:id",
-//   async (req: Request, res: Response, next: NextFunction) => {
-//     try {
-//     } catch (error) {
-//       next(error);
-//     }
-//   }
-// );
+app.delete(
+  "/models/:id",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      await db.deleteModel(req.params.id);
+      res.json({ message: "Model Deleted" });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
 
 app.use(errorHandler);
 

@@ -461,3 +461,26 @@ export async function getMatchesByTeamName(id: string) {
     throw new Error("Failed to get matches from team");
   }
 }
+
+export async function getModelsByTeamName(name: string) {
+  try {
+    const models = await prisma.model.findMany({
+      where: {
+        team: {
+          name: name,
+        },
+      },
+      include: {
+        team: true,
+        matchesAsTeam1: true,
+        matchesAsTeam2: true,
+        matchesAsWinningModel: true,
+      },
+    });
+
+    return models;
+  } catch (error) {
+    console.error("Error getting models", error);
+    throw new Error("Failed to get models from team");
+  }
+}
