@@ -69,7 +69,7 @@ app.get("/teams", async (req: Request, res: Response, next: NextFunction) => {
     } else {
       const teams = await db.getAllTeams();
 
-      res.json({ teams });
+      res.json(teams);
     }
   } catch (error) {
     next(error);
@@ -82,7 +82,7 @@ app.get(
     try {
       const id = req.params.id;
       const team = await db.getTeamById(id);
-      res.json({ team });
+      res.json(team);
     } catch (error) {
       next(error);
     }
@@ -133,13 +133,13 @@ app.get("/players", async (req: Request, res: Response, next: NextFunction) => {
     const discord_id = req.query.discord_id as string;
     if (epic_id) {
       const player = await db.getUserByEpicId(epic_id);
-      res.json({ player });
+      res.json(player);
     } else if (discord_id) {
       const player = await db.getUserByDiscordId(discord_id);
-      res.json({ player });
+      res.json(player);
     } else {
       const players = await db.getAllUsers();
-      res.json({ players });
+      res.json(players);
     }
   } catch (error) {
     next(error);
@@ -152,7 +152,7 @@ app.get(
     try {
       const id = req.params.id;
       const player = await db.getUserById(id);
-      res.json({ player });
+      res.json(player);
     } catch (error) {
       next(error);
     }
@@ -216,16 +216,16 @@ app.get("/matches", async (req: Request, res: Response, next: NextFunction) => {
     const model_id = req.query.model_id as string;
     if (team_id) {
       const matches = await db.getMatchesByTeamID(team_id);
-      res.json({ matches });
+      res.json(matches);
     } else if (team_name) {
       const matches = await db.getMatchesByTeamName(team_name);
-      res.json({ matches });
+      res.json(matches);
     } else if (model_id) {
       const matches = await db.getMatchesByModelID(model_id);
-      res.json({ matches });
+      res.json(matches);
     } else {
       const matches = await db.getAllMatches();
-      res.json({ matches });
+      res.json(matches);
     }
   } catch (error) {
     next(error);
@@ -238,7 +238,7 @@ app.get(
     try {
       const id = req.params.id;
       const match = await db.getMatchById(id);
-      res.json({ match });
+      res.json(match);
     } catch (error) {
       next(error);
     }
@@ -313,13 +313,13 @@ app.get("/models", async (req: Request, res: Response, next: NextFunction) => {
     const team_id = req.query.team_id as string;
     if (team_name) {
       const models = await db.getModelsByTeamName(team_name);
-      res.json({ models });
+      res.json(models);
     } else if (team_id) {
       const models = await db.getModelsByTeamID(team_id);
-      res.json({ models });
+      res.json(models);
     } else {
       const models = await db.getAllModels();
-      res.json({ models });
+      res.json(models);
     }
   } catch (error) {
     next(error);
@@ -332,7 +332,7 @@ app.get(
     try {
       const id = req.params.id;
       const model = await db.getModelById(id);
-      res.json({ model });
+      res.json(model);
     } catch (error) {
       next(error);
     }
