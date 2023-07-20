@@ -1,194 +1,183 @@
-# API Endpoints Documentation
+# API Documentation
 
+This document provides details on how to use the Express API provided for managing teams, players, matches, and models.
 
-## Table of Contents
+## Base URL
 
-- [Insert Mock Data](#insert-mock-data)
-- [Get All Teams](#get-all-teams)
-- [Get All Users](#get-all-users)
-- [Get All Matches](#get-all-matches)
-- [Get User by UserID](#get-user-by-userid)
-- [Get Team by TeamID](#get-team-by-teamid)
-- [Get Users of a Team](#get-users-of-a-team)
-- [Get Matches of a Team](#get-matches-of-a-team)
-- [Get Models of a Team](#get-models-of-a-team)
-- [Get Match by MatchID](#get-match-by-matchid)
-- [Get Model by ModelID](#get-model-by-modelid)
-- [Starting API](#starting-the-server)
-- [Using Docker](#using-docker)
+The base URL for accessing the API is `http://localhost:3000`.
 
-## Endpoints
+## Authentication
 
-### Insert Mock Data
+The API requires a valid token to access its endpoints. Include the token in the `headers` of your requests. If the token is not provided or is invalid, the API will return a `401 Unauthorized` response.
 
-Endpoint to create and insert mock data into the database.
+## Error Handling
 
-- **URL:** `/insertMockData`
-- **HTTP Method:** GET
-- **Response:**
-  - Success: `Done!` with status code 200
-  - Error: Returns an error message with status code 500 for internal server errors.
+The API handles errors and returns appropriate status codes. If an error occurs, the API will respond with a JSON object containing the error details.
+
+## Teams
 
 ### Get All Teams
 
-Endpoint to get information about all teams.
+- **Endpoint**: `/teams`
+- **Method**: `GET`
+- **Description**: Get a list of all teams.
 
-- **URL:** `/all/teams`
-- **HTTP Method:** GET
-- **Response:**
-  - Success: Returns an array of team objects.
-  - Error: Returns a message if no teams are found or an internal server error occurs.
+### Get Team by ID
 
-### Get All Users
+- **Endpoint**: `/teams/:id`
+- **Method**: `GET`
+- **Description**: Get a team by its ID.
 
-Endpoint to get information about all users.
+### Get Team by Name
 
-- **URL:** `/all/users`
-- **HTTP Method:** GET
-- **Response:**
-  - Success: Returns an array of user objects.
-  - Error: Returns a message if no users are found or an internal server error occurs.
+- **Endpoint**: `/teams`
+- **Method**: `GET`
+- **Query Parameter**: `name` (string)
+- **Description**: Get a team by its name.
+
+### Create Team
+
+- **Endpoint**: `/teams`
+- **Method**: `POST`
+- **Query Parameter**: `name` (string)
+- **Description**: Create a new team.
+
+### Update Team
+
+- **Endpoint**: `/teams/:id`
+- **Method**: `PUT`
+- **Query Parameter**: `name` (string)
+- **Description**: Update an existing team by its ID.
+
+### Delete Team
+
+- **Endpoint**: `/teams/:id`
+- **Method**: `DELETE`
+- **Description**: Delete a team by its ID.
+
+## Players
+
+### Get All Players
+
+- **Endpoint**: `/players`
+- **Method**: `GET`
+- **Description**: Get a list of all players.
+
+### Get Player by ID
+
+- **Endpoint**: `/players/:id`
+- **Method**: `GET`
+- **Description**: Get a player by their ID.
+
+### Get Player by Epic ID or Discord ID
+
+- **Endpoint**: `/players`
+- **Method**: `GET`
+- **Query Parameter**: `epic_id` (string) OR `discord_id` (string)
+- **Description**: Get a player by their Epic ID or Discord ID.
+
+### Create Player
+
+- **Endpoint**: `/players`
+- **Method**: `POST`
+- **Query Parameters**: `name` (string), `epic_id` (string), `discord_id` (string), `team_id` (string, optional)
+- **Description**: Create a new player.
+
+### Update Player
+
+- **Endpoint**: `/players/:id`
+- **Method**: `PUT`
+- **Query Parameters**: `name` (string), `epic_id` (string), `discord_id` (string), `team_id` (string, optional)
+- **Description**: Update an existing player by their ID.
+
+### Delete Player
+
+- **Endpoint**: `/players/:id`
+- **Method**: `DELETE`
+- **Description**: Delete a player by their ID.
+
+## Matches
 
 ### Get All Matches
 
-Endpoint to get information about all matches.
+- **Endpoint**: `/matches`
+- **Method**: `GET`
+- **Description**: Get a list of all matches.
 
-- **URL:** `/all/matches`
-- **HTTP Method:** GET
-- **Response:**
-  - Success: Returns an array of match objects.
-  - Error: Returns a message if no matches are found or an internal server error occurs.
+### Get Match by ID
 
-### Get User by UserID
+- **Endpoint**: `/matches/:id`
+- **Method**: `GET`
+- **Description**: Get a match by its ID.
 
-Endpoint to get information about a specific user based on their userID.
+### Get Matches by Team ID, Team Name, or Model ID
 
-- **URL:** `/users/:userID`
-- **HTTP Method:** GET
-- **URL Parameters:**
-  - `userID` (string): The unique identifier of the user.
-- **Response:**
-  - Success: Returns the user object.
-  - Error: Returns a message if the user is not found or an internal server error occurs.
+- **Endpoint**: `/matches`
+- **Method**: `GET`
+- **Query Parameters**: `team_id` (string), `team_name` (string), `model_id` (string)
+- **Description**: Get matches by team ID, team name, or model ID.
 
-### Get Team by TeamName
+### Create Match
 
-Endpoint to get information about a specific team based on its teamName.
+- **Endpoint**: `/matches`
+- **Method**: `POST`
+- **Query Parameters**: `team_1_id` (string), `team_2_id` (string), `team_1_model_id` (string), `team_2_model_id` (string), `team_1_score` (number, optional), `team_2_score` (number, optional), `timestamp` (string, optional), `type` (string, optional), `winning_team_id` (string, optional), `winning_model_id` (string, optional)
+- **Description**: Create a new match.
 
-- **URL:** `/teams/:teamName`
-- **HTTP Method:** GET
-- **URL Parameters:**
-  - `teamName` (string): The unique identifier of the team.
-- **Response:**
-  - Success: Returns the team object.
-  - Error: Returns a message if the team is not found or an internal server error occurs.
+### Update Match
 
-### Get Users of a Team
+- **Endpoint**: `/matches/:id`
+- **Method**: `PUT`
+- **Query Parameters**: `team_1_id` (string), `team_2_id` (string), `team_1_model_id` (string), `team_2_model_id` (string), `team_1_score` (number, optional), `team_2_score` (number, optional), `timestamp` (string, optional), `type` (string, optional), `winning_team_id` (string, optional), `winning_model_id` (string, optional)
+- **Description**: Update an existing match by its ID.
 
-Endpoint to get all users belonging to a specific team.
+### Delete Match
 
-- **URL:** `/teams/:teamName/users`
-- **HTTP Method:** GET
-- **URL Parameters:**
-  - `teamName` (string): The unique identifier of the team.
-- **Response:**
-  - Success: Returns an array of user objects belonging to the team.
-  - Error: Returns a message if the team is not found or an internal server error occurs.
+- **Endpoint**: `/matches/:id`
+- **Method**: `DELETE`
+- **Description**: Delete a match by its ID.
 
-### Get Matches of a Team
+## Models
 
-Endpoint to get all matches involving a specific team.
+### Get All Models
 
-- **URL:** `/teams/:teamName/matches`
-- **HTTP Method:** GET
-- **URL Parameters:**
-  - `teamName` (string): The unique identifier of the team.
-- **Response:**
-  - Success: Returns an array of match objects involving the team.
-  - Error: Returns a message if the team is not found or an internal server error occurs.
+- **Endpoint**: `/models`
+- **Method**: `GET`
+- **Description**: Get a list of all models.
 
-### Get Models of a Team
+### Get Model by ID
 
-Endpoint to get all models associated with a specific team.
+- **Endpoint**: `/models/:id`
+- **Method**: `GET`
+- **Description**: Get a model by its ID.
 
-- **URL:** `/teams/:teamName/models`
-- **HTTP Method:** GET
-- **URL Parameters:**
-  - `teamName` (string): The unique identifier of the team.
-- **Response:**
-  - Success: Returns an array of model objects associated with the team.
-  - Error: Returns a message if the team is not found or an internal server error occurs.
+### Get Models by Team ID or Team Name
 
-### Get Match by MatchID
+- **Endpoint**: `/models`
+- **Method**: `GET`
+- **Query Parameters**: `team_id` (string), `team_name` (string)
+- **Description**: Get models by team ID or team name.
 
-Endpoint to get information about a specific match based on its matchID.
+### Create Model
 
-- **URL:** `/matches/:matchID`
-- **HTTP Method:** GET
-- **URL Parameters:**
-  - `matchID` (string): The unique identifier of the match.
-- **Response:**
-  - Success: Returns the match object.
-  - Error: Returns a message if the match is not found or an internal server error occurs.
+- **Endpoint**: `/models`
+- **Method**: `POST`
+- **Query Parameters**: `name` (string), `team_id` (string), `url` (string)
+- **Description**: Create a new model.
 
-### Get Model by ModelID
+### Update Model
 
-Endpoint to get information about a specific model based on its modelID.
+- **Endpoint**: `/models/:id`
+- **Method**: `PUT`
+- **Query Parameters**: `name` (string), `team_id` (string), `url` (string)
+- **Description**: Update an existing model by its ID.
 
-- **URL:** `/models/:modelID`
-- **HTTP Method:** GET
-- **URL Parameters:**
-  - `modelID` (string): The unique identifier of the model.
-- **Response:**
-  - Success: Returns the model object.
-  - Error: Returns a message if the model is not found or an internal server error occurs.
+### Delete Model
 
-### Error Handlers
+- **Endpoint**: `/models/:id`
+- **Method**: `DELETE`
+- **Description**: Delete a model by its ID.
 
-If an endpoint is not found (404), the server will return a "Not Found" message with status code 404.
+---
 
-For all other errors, an internal server error (500) will be returned along with an error message.
-
-## Starting the Server
-Clone this repo
-```bash
-git clone https://github.com/Clackroe/MLGameAPI
-```
-
-Next add your database url to .env.example and rename to .env
-
-Install dependencies 
-```bash
-npm install
-```
-To start the server, run the following command:
-```bash
-npm run start
-```
-
-The server will be accessible at `http://localhost:3000`, assuming the default port (3000) is used.
-
-### Using Docker
-
-  Make sure you have docker-compose installed on your machine.
-
- Clone this repo
-  ```bash
-  git clone https://github.com/Clackroe/MLGameAPI
-  ```
-  Next add your database url to .env.example and rename to .env
-
-  Build the image:
-  ```bash
-  docker-compose build
-  ```
-  Run the container:
-  ```bash
-  docker-compose up -d
-  ```
-  The api will now be running on localhost:6001
-  
-  
-  
-  
-  
+Please note that some endpoints require query parameters to be provided for proper operation. Make sure to replace the `:id` placeholder in the endpoints with the actual ID when using specific routes. If you have any questions or encounter issues, please refer to the API documentation or contact the API developer for assistance.
