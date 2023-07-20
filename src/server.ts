@@ -6,7 +6,24 @@ const app = express();
 const port = 3000; // default port to listen
 
 import * as db from "./db";
-// import { insertMockData, insertMatches } from "./mockData";
+
+async function accessHandler(req: Request, res: Response, next: NextFunction) {
+  const token = req.headers.token;
+  if (!token) {
+    return res
+      .status(401)
+      .send({ error: "Unauthorized | No Credentials Sent!" });
+  }
+
+  const validToken = await db.validateToken(token as string);
+  if (validToken.valid) {
+    next();
+  } else {
+    res.status(401).send({ error: "Unauthorized" });
+  }
+}
+
+app.use(accessHandler);
 
 function errorHandler(
   err: Error,
@@ -22,6 +39,15 @@ function errorHandler(
     message: err.message,
   });
 }
+app.use(errorHandler);
+
+function logRequest(req: Request, res: Response, next: NextFunction) {
+  console.log(req.method, req.path);
+  next();
+}
+logRequest;
+
+app.use(logRequest);
 
 //Teams Routes
 //get teams by name /teams?name={name}
@@ -348,8 +374,6 @@ app.delete(
     }
   }
 );
-
-app.use(errorHandler);
 
 // start server
 app.listen(port, () => {

@@ -44,8 +44,8 @@ model team {
   matchesAsTeam1        match[] @relation("matchesAsTeam1")
   matchesAsTeam2        match[] @relation("matchesAsTeam2")
   matchesAsWinningModel match[] @relation("matchesAsWinningModel")
-  users                 user[]
   models                model[]
+  users                 user[]
 }
 
 model user {
@@ -56,3 +56,9 @@ model user {
   name       String? @db.VarChar(255)
   team       team?   @relation(fields: [team_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_user_team_id")
 }
+
+model token {
+  id        String   @id @default(uuid()) @db.Uuid
+  createdAt DateTime @default(now()) @db.Timestamp(6)
+  name      String   @unique
+  }

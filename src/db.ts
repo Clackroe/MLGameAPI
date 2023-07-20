@@ -484,3 +484,17 @@ export async function getModelsByTeamName(name: string) {
     throw new Error("Failed to get models from team");
   }
 }
+
+export async function validateToken(token: string) {
+  try {
+    const tokenOut = await prisma.token.findUnique({
+      where: {
+        id: token,
+      },
+    });
+
+    return { token: tokenOut, valid: true };
+  } catch (error) {
+    return { token: null, valid: false };
+  }
+}
