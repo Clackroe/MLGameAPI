@@ -41,8 +41,15 @@ function errorHandler(
 }
 app.use(errorHandler);
 
-function logRequest(req: Request, res: Response, next: NextFunction) {
-  console.log(req.method, req.path);
+async function logRequest(req: Request, res: Response, next: NextFunction) {
+  const token = req.headers.token;
+  const tokenData = await db.validateToken(token as string);
+  console.log(
+    `${tokenData.token.name} made a `,
+    req.method,
+    req.path,
+    `request at ${new Date().toISOString()}`
+  );
   next();
 }
 logRequest;
