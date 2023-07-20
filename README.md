@@ -2,6 +2,41 @@
 
 This document provides details on how to use the Express API provided for managing teams, players, matches, and models.
 
+## Table of Contents
+
+- [Docker](#Docker)
+- [Base URL](#base-url)
+- [Authentication](#authentication)
+- [Error Handling](#error-handling)
+- [Teams](#teams)
+  - [Get All Teams](#get-all-teams)
+  - [Get Team by ID](#get-team-by-id)
+  - [Get Team by Name](#get-team-by-name)
+  - [Create Team](#create-team)
+  - [Update Team](#update-team)
+  - [Delete Team](#delete-team)
+- [Players](#players)
+  - [Get All Players](#get-all-players)
+  - [Get Player by ID](#get-player-by-id)
+  - [Get Player by Epic ID or Discord ID](#get-player-by-epic-id-or-discord-id)
+  - [Create Player](#create-player)
+  - [Update Player](#update-player)
+  - [Delete Player](#delete-player)
+- [Matches](#matches)
+  - [Get All Matches](#get-all-matches)
+  - [Get Match by ID](#get-match-by-id)
+  - [Get Matches by Team ID, Team Name, or Model ID](#get-matches-by-team-id-team-name-or-model-id)
+  - [Create Match](#create-match)
+  - [Update Match](#update-match)
+  - [Delete Match](#delete-match)
+- [Models](#models)
+  - [Get All Models](#get-all-models)
+  - [Get Model by ID](#get-model-by-id)
+  - [Get Models by Team ID or Team Name](#get-models-by-team-id-or-team-name)
+  - [Create Model](#create-model)
+  - [Update Model](#update-model)
+  - [Delete Model](#delete-model)
+
 ## Base URL
 
 The base URL for accessing the API is `http://localhost:3000`.
@@ -181,3 +216,33 @@ The API handles errors and returns appropriate status codes. If an error occurs,
 ---
 
 Please note that some endpoints require query parameters to be provided for proper operation. Make sure to replace the `:id` placeholder in the endpoints with the actual ID when using specific routes. If you have any questions or encounter issues, please refer to the API documentation or contact the API developer for assistance.
+
+---
+
+---
+
+## Docker
+
+Make sure you have docker-compose installed on your machine.
+
+Clone this repo
+
+```bash
+git clone https://github.com/Clackroe/MLGameAPI
+```
+
+Next add your database url to .env.example and rename to .env
+
+Build the image:
+
+```bash
+docker-compose build
+```
+
+Run the container:
+
+```bash
+docker-compose up -d
+```
+
+The api will now be running on localhost:6001
