@@ -69,7 +69,7 @@ app.get("/teams", async (req: Request, res: Response, next: NextFunction) => {
     } else {
       const teams = await db.getAllTeams();
 
-      res.json(teams);
+      res.json({ teams });
     }
   } catch (error) {
     next(error);
@@ -139,7 +139,7 @@ app.get("/players", async (req: Request, res: Response, next: NextFunction) => {
       res.json(player);
     } else {
       const players = await db.getAllUsers();
-      res.json(players);
+      res.json({ players });
     }
   } catch (error) {
     next(error);
@@ -225,7 +225,7 @@ app.get("/matches", async (req: Request, res: Response, next: NextFunction) => {
       res.json(matches);
     } else {
       const matches = await db.getAllMatches();
-      res.json(matches);
+      res.json({ matches });
     }
   } catch (error) {
     next(error);
@@ -319,7 +319,7 @@ app.get("/models", async (req: Request, res: Response, next: NextFunction) => {
       res.json(models);
     } else {
       const models = await db.getAllModels();
-      res.json(models);
+      res.json({ models });
     }
   } catch (error) {
     next(error);
