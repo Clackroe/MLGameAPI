@@ -95,7 +95,7 @@ The script also defines several data classes that are used for deserializing JSO
 
 **NOTE**: You must use a callback function to extract the data. See below examples.
 
-```bash
+```C#
     Type neededValue;
     ap.<CRUD method>(<input params>, (Type variable) =>
     {
@@ -105,7 +105,7 @@ The script also defines several data classes that are used for deserializing JSO
 
 ### Example
 
-```bash
+```C#
 using UnityEngine;
 
 public class TestAPI : MonoBehaviour
