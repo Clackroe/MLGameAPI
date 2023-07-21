@@ -4,6 +4,8 @@ This document provides details on how to use the Express API provided for managi
 
 ## Table of Contents
 
+- [Unity Script Docs](UnityScripts/README.md)
+
 - [Docker](#docker)
 - [Base URL](#base-url)
 - [Authentication](#authentication)
