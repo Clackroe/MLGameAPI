@@ -110,12 +110,12 @@ using UnityEngine;
 
 public class TestAPI : MonoBehaviour
 {
-    private MLApi ap;
+    private MLApi api;
     void Start()
     {
-        ap = gameObject.AddComponent<MLApi>();
+        api = gameObject.AddComponent<MLApi>();
 
-        ap.GetTeamByName("Team_2_Name", (Team team) =>
+        api.GetTeamByName("Team_2_Name", (Team team) =>
         {
             Debug.Log("Team: " + team.id);
         });
