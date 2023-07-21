@@ -9,10 +9,10 @@ public class MLApi : MonoBehaviour
     // Start is called before the first frame update    
 
 
-    private const string URL = "https://mlapi.xancorp.us";
+    private const string URL = "https://test-api.test.com";
 
 
-    private const string TOKEN = "4ae10c3a-79f9-4cd2-aeae-ba0fd5f0f7a3";
+    private const string TOKEN = "access-token";
 
     private const string TEAMS_ENDPOINT = "/teams";
     private const string PLAYERS_ENDPOINT = "/players";
