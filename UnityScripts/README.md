@@ -96,10 +96,13 @@ The script also defines several data classes that are used for deserializing JSO
 **NOTE**: You must use a callback function to extract the data. See below examples.
 
 ```C#
-    Type neededValue;
+
     ap.<CRUD method>(<input params>, (Type variable) =>
     {
-        neededValue = variable;
+        Type neededValue = variable;
+
+        Debub.Log(neededValue.<attribute>)
+        //Plus any other logic you need it for
     });
 ```
 
