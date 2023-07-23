@@ -6,6 +6,7 @@ const app = express();
 const port = 3000; // default port to listen
 
 import * as db from "./db";
+import * as dock from "./docker-utils";
 
 async function accessHandler(req: Request, res: Response, next: NextFunction) {
   const token = req.headers.token;
@@ -381,6 +382,12 @@ app.delete(
     }
   }
 );
+
+app.get("/testDocker", async (req: Request, res: Response) => {
+  dock.testFunc();
+
+  res.send({ message: "Hello World!" });
+});
 
 // start server
 app.listen(port, () => {
