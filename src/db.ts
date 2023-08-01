@@ -485,7 +485,7 @@ export async function validateToken(token: string) {
   try {
     const tokenOut = await prisma.apiToken.findUnique({
       where: {
-        token: token,
+        id: token,
       },
     });
     return { token: tokenOut, valid: true };
