@@ -46,7 +46,7 @@ async function logRequest(req: Request, res: Response, next: NextFunction) {
   const token = req.headers.token;
   const tokenData = await db.validateToken(token as string);
   console.log(
-    `${tokenData.token} made a `,
+    `${tokenData.token.name} made a `,
     req.method,
     req.path,
     `request at ${new Date().toISOString()}`
