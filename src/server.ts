@@ -46,7 +46,7 @@ async function logRequest(req: Request, res: Response, next: NextFunction) {
   const token = req.headers.token;
   const tokenData = await db.validateToken(token as string);
   console.log(
-    `${tokenData.token.name} made a `,
+    `${tokenData.token} made a `,
     req.method,
     req.path,
     `request at ${new Date().toISOString()}`
@@ -92,7 +92,12 @@ app.get(
 
 app.post("/teams", async (req: Request, res: Response, next: NextFunction) => {
   try {
-    await db.createTeam({ id: uuidv4(), name: req.query.name as string });
+    await db.upsertTeam({
+      id: uuidv4(),
+      name: req.query.name as string,
+      eq_elo: parseInt(req.query.eq_elo as string),
+      trained_elo: parseInt(req.query.trained_elo as string),
+    });
     res.json({ message: "Team Created" });
   } catch (error) {
     next(error);
@@ -103,9 +108,11 @@ app.put(
   "/teams/:id",
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      await db.updateTeam(req.params.id, {
+      await db.upsertTeam({
         id: req.params.id as string,
         name: req.query.name as string,
+        eq_elo: parseInt(req.query.eq_elo as string),
+        trained_elo: parseInt(req.query.trained_elo as string),
       });
       res.json({ message: "Team Updated" });
     } catch (error) {
@@ -136,7 +143,7 @@ app.get("/players", async (req: Request, res: Response, next: NextFunction) => {
       const player = await db.getUserByEpicId(epic_id);
       res.json(player);
     } else if (discord_id) {
-      const player = await db.getUserByDiscordId(discord_id);
+      const player = await db.getUserByName(discord_id);
       res.json(player);
     } else {
       const players = await db.getAllUsers();
@@ -164,32 +171,17 @@ app.post(
   "/players",
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      await db.createUser({
+      await db.upsertUser({
         id: uuidv4(),
         name: req.query.name as string,
         epic_id: req.query.epic_id as string,
         discord_id: req.query.discord_id as string,
         team_id: req.query.team_id as string,
+        email: req.query.email as string,
+        image: req.query.image as string,
+        emailVerified: undefined,
       });
       res.json({ message: "Player Created" });
-    } catch (error) {
-      next(error);
-    }
-  }
-);
-
-app.put(
-  "/players/:id",
-  async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      await db.updateUser(req.params.id, {
-        id: req.params.id as string,
-        name: req.query.name as string,
-        epic_id: req.query.epic_id as string,
-        discord_id: req.query.discord_id as string,
-        team_id: req.query.team_id as string,
-      });
-      res.json({ message: "Player Updated" });
     } catch (error) {
       next(error);
     }
@@ -214,15 +206,11 @@ app.get("/matches", async (req: Request, res: Response, next: NextFunction) => {
   try {
     const team_id = req.query.team_id as string;
     const team_name = req.query.team_name as string;
-    const model_id = req.query.model_id as string;
     if (team_id) {
-      const matches = await db.getMatchesByTeamID(team_id);
+      const matches = await db.getEquationMatchById(team_id);
       res.json(matches);
     } else if (team_name) {
-      const matches = await db.getMatchesByTeamName(team_name);
-      res.json(matches);
-    } else if (model_id) {
-      const matches = await db.getMatchesByModelID(model_id);
+      const matches = await db.getEquationMatchesByTeamId(team_name);
       res.json(matches);
     } else {
       const matches = await db.getAllMatches();
@@ -238,7 +226,7 @@ app.get(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const id = req.params.id;
-      const match = await db.getMatchById(id);
+      const match = await db.getEquationMatchById(id);
       res.json(match);
     } catch (error) {
       next(error);
@@ -250,18 +238,10 @@ app.post(
   "/matches",
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      await db.createMatch({
-        id: uuidv4(),
-        team_1: req.query.team_1_id as string,
-        team_2: req.query.team_2_id as string,
-        team_1_model: req.query.team_1_model_id as string,
-        team_2_model: req.query.team_2_model_id as string,
-        team_1_score: parseInt(req.query.team_1_score as string),
-        team_2_score: parseInt(req.query.team_2_score as string),
-        timestamp: new Date(req.query.timestamp as string),
+      await db.upsertEquationMatch({
+        id: req.query.id as string,
         type: req.query.type as string,
-        winning_team_id: req.query.winning_team_id as string,
-        winning_model_id: req.query.winning_model_id as string,
+        timestamp: undefined,
       });
       res.json({ message: "Match Created" });
     } catch (error) {
@@ -270,35 +250,11 @@ app.post(
   }
 );
 
-app.put(
-  "/matches/:id",
-  async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      await db.updateMatch(req.params.id, {
-        id: req.params.id as string,
-        team_1: req.query.team_1_id as string,
-        team_2: req.query.team_2_id as string,
-        team_1_model: req.query.team_1_model_id as string,
-        team_2_model: req.query.team_2_model_id as string,
-        team_1_score: parseInt(req.query.team_1_score as string),
-        team_2_score: parseInt(req.query.team_2_score as string),
-        timestamp: new Date(req.query.timestamp as string),
-        type: req.query.type as string,
-        winning_team_id: req.query.winning_team_id as string,
-        winning_model_id: req.query.winning_model_id as string,
-      });
-      res.json({ message: "Match Updated" });
-    } catch (error) {
-      next(error);
-    }
-  }
-);
-
 app.delete(
   "/matches/:id",
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      await db.deleteMatch(req.params.id);
+      await db.deleteEquationMatch(req.params.id);
       res.json({ message: "Match Deleted" });
     } catch (error) {
       next(error);
@@ -306,77 +262,65 @@ app.delete(
   }
 );
 
-// //Models Routes
-
-app.get("/models", async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const team_name = req.query.team_name as string;
-    const team_id = req.query.team_id as string;
-    if (team_name) {
-      const models = await db.getModelsByTeamName(team_name);
-      res.json(models);
-    } else if (team_id) {
-      const models = await db.getModelsByTeamID(team_id);
-      res.json(models);
-    } else {
-      const models = await db.getAllModels();
-      res.json({ models });
-    }
-  } catch (error) {
-    next(error);
-  }
-});
-
 app.get(
-  "/models/:id",
+  "/equations",
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const id = req.params.id;
-      const model = await db.getModelById(id);
-      res.json(model);
+      const team_id = req.query.team_id as string;
+      const user_id = req.query.user_id as string;
+      if (team_id) {
+        const equations = await db.getEquationsByTeamId(team_id);
+        res.json({ equations });
+      } else if (user_id) {
+        const equations = await db.getEquationByUserId(user_id);
+        res.json({ equations });
+      } else {
+        const equations = await db.getAllEquations();
+        res.json({ equations });
+      }
     } catch (error) {
       next(error);
     }
   }
 );
 
-app.post("/models", async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    await db.createModel({
-      id: uuidv4(),
-      name: req.query.name as string,
-      team_id: req.query.team_id as string,
-      url: req.query.url as string,
-    });
-    res.json({ message: "Model Created" });
-  } catch (error) {
-    next(error);
+app.post(
+  "/equations",
+  async (req: Request, res: Response, next: NextFunction) => {
+    console.log(req.query.name as string);
+    console.log(req.query.name);
+    //console.log(req.body.);
+
+    console.log("found elo_contribute to be undefined");
+    try {
+      await db.upsertEquation({
+        id: uuidv4(),
+        name: req.query.name as string,
+        team_id: req.query.team_id as string,
+        user_id: req.query.user_id as string,
+        elo_contribute: 0,
+        content: req.query.content,
+      });
+      res.json({ message: "Equation Created" });
+    } catch (error) {
+      next(error);
+    }
   }
-});
+);
 
 app.put(
-  "/models/:id",
+  "/equations/:id",
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      await db.updateModel(req.params.id, {
+      await db.upsertEquation({
         id: req.params.id as string,
         name: req.query.name as string,
         team_id: req.query.team_id as string,
-        url: req.query.url as string,
+        user_id: req.query.user_id as string,
+        elo_contribute: parseInt(req.query.elo_contribute as string),
+        content: req.query.content,
       });
-      res.json({ message: "Model Updated" });
-    } catch (error) {
-      next(error);
-    }
-  }
-);
-
-app.delete(
-  "/models/:id",
-  async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      await db.deleteModel(req.params.id);
-      res.json({ message: "Model Deleted" });
+      res.json({ message: "Equation Updated" });
     } catch (error) {
       next(error);
     }

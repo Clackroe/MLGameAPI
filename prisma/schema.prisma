@@ -1,5 +1,6 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["views"]
 }
 
 datasource db {
@@ -7,58 +8,136 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model match {
-  id               String    @id @db.Uuid
-  team_1           String    @db.Uuid
-  team_1_model     String    @db.Uuid
-  team_2           String    @db.Uuid
-  team_2_model     String    @db.Uuid
-  type             String    @db.VarChar(255)
-  timestamp        DateTime? @db.Timestamp(6)
-  team_1_score     Int?
-  team_2_score     Int?
-  winning_team_id  String?   @db.Uuid
-  winning_model_id String?   @db.Uuid
-  team1            team      @relation("matchesAsTeam1", fields: [team_1], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  modelAsTeam1     model     @relation("matchesAsTeam1", fields: [team_1_model], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  team2            team      @relation("matchesAsTeam2", fields: [team_2], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  modelAsTeam2     model     @relation("matchesAsTeam2", fields: [team_2_model], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  winningTeam      team?     @relation("matchesAsWinningModel", fields: [winning_team_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "match_winner_fkey")
-  winningModel     model?    @relation("matchesAsWinningModel", fields: [winning_model_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "match_winning_model_fkey")
+model Account {
+  id                String  @id
+  userId            String  @db.Uuid
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  User              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
 }
 
-model model {
-  id                    String  @id @db.Uuid
-  team_id               String  @db.Uuid
-  name                  String  @db.VarChar(255)
-  url                   String  @db.VarChar(255)
-  matchesAsTeam1        match[] @relation("matchesAsTeam1")
-  matchesAsTeam2        match[] @relation("matchesAsTeam2")
-  matchesAsWinningModel match[] @relation("matchesAsWinningModel")
-  team                  team    @relation(fields: [team_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_model_team_id")
+model ApiToken {
+  id         String    @id @db.Uuid
+  created_at DateTime  @default(now()) @db.Timestamp(6)
+  name       String    @unique
+  access     ApiAccess
+  token      String    @unique
 }
 
-model team {
-  id                    String  @id @db.Uuid
-  name                  String  @unique @db.VarChar(255)
-  matchesAsTeam1        match[] @relation("matchesAsTeam1")
-  matchesAsTeam2        match[] @relation("matchesAsTeam2")
-  matchesAsWinningModel match[] @relation("matchesAsWinningModel")
-  models                model[]
-  users                 user[]
+model Equation {
+  id                  String                @id @db.Uuid
+  name                String                @db.VarChar(255)
+  user_id             String?               @db.Uuid
+  team_id             String?               @db.Uuid
+  elo_contribute      Int                   @default(0)
+  content             Json                  @default("null") @db.Json
+  Team                Team?                 @relation(fields: [team_id], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  User                User?                 @relation(fields: [user_id], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  TeamInEquationMatch TeamInEquationMatch[]
 }
 
-model user {
-  id         String  @id @db.Uuid
-  discord_id String  @unique @db.VarChar(255)
-  epic_id    String  @unique @db.VarChar(255)
-  team_id    String? @db.Uuid
-  name       String? @db.VarChar(255)
-  team       team?   @relation(fields: [team_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_user_team_id")
+model EquationMatch {
+  id                  String                @id @db.Uuid
+  type                String                @default("Casual")
+  timestamp           DateTime?             @db.Timestamp(6) @default(now())
+  TeamInEquationMatch TeamInEquationMatch[]
 }
 
-model token {
-  id        String   @id @default(uuid()) @db.Uuid
-  createdAt DateTime @default(now()) @db.Timestamp(6)
-  name      String   @unique
-  }
+model Job {
+  id        String            @id @db.Uuid
+  createdAt DateTime          @default(now()) @db.Timestamp(6)
+  team_id   String            @db.Uuid
+  payload   String
+  status    enums_jobs_status
+  error     String?
+  Team      Team              @relation(fields: [team_id], references: [id], onUpdate: Restrict, map: "fk_user_team_id")
+}
+
+model Session {
+  expires      DateTime
+  sessionToken String   @unique
+  id           String   @id @db.Uuid
+  userId       String   @db.Uuid
+  User         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Team {
+  id                  String                @id @db.Uuid
+  name                String                @unique @db.VarChar(255)
+  eq_elo              Int                   @default(1000)
+  trained_elo         Int                   @default(1000)
+  Equation            Equation[]
+  Job                 Job[]
+  TeamInEquationMatch TeamInEquationMatch[]
+  User                User[]
+}
+
+model TeamInEquationMatch {
+  equationMatchId String        @db.Uuid
+  teamId          String        @db.Uuid
+  score           Int?          @default(0)
+  equationID      String        @db.Uuid
+  winner          Boolean?      @default(false)
+  Equation        Equation      @relation(fields: [equationID], references: [id])
+  EquationMatch   EquationMatch @relation(fields: [equationMatchId], references: [id])
+  Team            Team          @relation(fields: [teamId], references: [id])
+
+  @@id([equationMatchId, teamId])
+}
+
+model User {
+  id            String     @id @db.Uuid
+  name          String     @unique @db.VarChar(255)
+  epic_id       String?    @unique @db.VarChar(255)
+  email         String?    @unique
+  image         String?
+  team_id       String?    @db.Uuid
+  emailVerified DateTime?
+  discord_id    String     @default(dbgenerated("('@'::text || (name)::text)")) @db.VarChar(255)
+  Account       Account[]
+  Equation      Equation[]
+  Session       Session[]
+  Team          Team?      @relation(fields: [team_id], references: [id], onDelete: Restrict, onUpdate: Restrict)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+/// The underlying view does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+view TeamView {
+  team_id         String  @id @db.Uuid
+  name            String? @db.VarChar(255)
+  eq_elo          Int?
+  trained_elo     Int?
+  eqmatcheswon    BigInt?
+  eqmatcheslost   BigInt?
+  eqmatchesplayed BigInt?
+}
+
+enum ApiAccess {
+  READONLY
+  READWRITE
+  READWRITEDELETE
+}
+
+enum enums_jobs_status {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
