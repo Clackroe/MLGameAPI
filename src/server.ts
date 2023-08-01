@@ -262,6 +262,71 @@ app.delete(
   }
 );
 
+app.get(
+  "/equations",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const team_id = req.query.team_id as string;
+      const user_id = req.query.user_id as string;
+      if (team_id) {
+        const equations = await db.getEquationsByTeamId(team_id);
+        res.json({ equations });
+      } else if (user_id) {
+        const equations = await db.getEquationByUserId(user_id);
+        res.json({ equations });
+      } else {
+        const equations = await db.getAllEquations();
+        res.json({ equations });
+      }
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+app.post(
+  "/equations",
+  async (req: Request, res: Response, next: NextFunction) => {
+    console.log(req.query.name as string);
+    console.log(req.query.name);
+    //console.log(req.body.);
+
+    console.log("found elo_contribute to be undefined");
+    try {
+      await db.upsertEquation({
+        id: uuidv4(),
+        name: req.query.name as string,
+        team_id: req.query.team_id as string,
+        user_id: req.query.user_id as string,
+        elo_contribute: 0,
+        content: req.query.content,
+      });
+      res.json({ message: "Equation Created" });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+app.put(
+  "/equations/:id",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      await db.upsertEquation({
+        id: req.params.id as string,
+        name: req.query.name as string,
+        team_id: req.query.team_id as string,
+        user_id: req.query.user_id as string,
+        elo_contribute: parseInt(req.query.elo_contribute as string),
+        content: req.query.content,
+      });
+      res.json({ message: "Equation Updated" });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
 app.get("/testDocker", async (req: Request, res: Response) => {
   dock.testFunc();
 

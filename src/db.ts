@@ -200,6 +200,7 @@ export async function deleteUser(userId: string) {
 // Function to create an equation
 export async function upsertEquation(data: Equation) {
   try {
+    console.log(data);
     const eq = await prisma.equation.upsert({
       where: { id: data.id },
       create: data,
@@ -209,6 +210,58 @@ export async function upsertEquation(data: Equation) {
   } catch (error) {
     console.error("Error upserting equation:", error);
     throw new Error("Failed to upsert equation.");
+  }
+}
+
+// Function to get all equations
+
+export async function getAllEquations() {
+  try {
+    const eqs = await prisma.equation.findMany({
+      include: {
+        Team: true,
+        User: true,
+      },
+    });
+    return eqs;
+  } catch (error) {
+    console.error("Error retrieving equations:", error);
+    throw new Error("Failed to retrieve equations.");
+  }
+}
+
+// Function to get all equations by a team
+
+export async function getEquationsByTeamId(teamId: string) {
+  try {
+    const eqs = await prisma.equation.findMany({
+      where: { team_id: teamId },
+      include: {
+        Team: true,
+        User: true,
+      },
+    });
+    return eqs;
+  } catch (error) {
+    console.error("Error retrieving equations:", error);
+    throw new Error("Failed to retrieve equations.");
+  }
+}
+
+// Function to get all equations by a user
+export async function getEquationByUserId(userId: string) {
+  try {
+    const eqs = await prisma.equation.findMany({
+      where: { user_id: userId },
+      include: {
+        Team: true,
+        User: true,
+      },
+    });
+    return eqs;
+  } catch (error) {
+    console.error("Error retrieving equations:", error);
+    throw new Error("Failed to retrieve equations.");
   }
 }
 
