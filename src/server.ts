@@ -5,27 +5,77 @@ import { v4 as uuidv4 } from "uuid";
 const app = express();
 const port = 3000; // default port to listen
 
+import rateLimit from "express-rate-limit";
+
 import * as db from "./db";
 import * as dock from "./docker-utils";
+import { Decimal } from "@prisma/client/runtime/library";
 
+//-------------------------------Middleware-------------------------------
+
+//RateLimiter
+const limiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // hour
+  max: 2000, // Limit each IP to 2000 requests per `window` per hour
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  skip: async (request) => {
+    //Skip admin tokens
+    const valid = await db.validateToken(request.headers.token as string);
+    return valid.token.access == "ADMIN";
+  },
+  message:
+    "You have reached your maximum number of requests this hour, try again soon.",
+});
+
+app.use(limiter);
+
+//Authorize Access
 async function accessHandler(req: Request, res: Response, next: NextFunction) {
+  const method = req.method as string;
   const token = req.headers.token;
   if (!token) {
     return res
       .status(401)
       .send({ error: "Unauthorized | No Credentials Sent!" });
   }
-
   const validToken = await db.validateToken(token as string);
-  if (validToken.valid) {
-    next();
-  } else {
-    res.status(401).send({ error: "Unauthorized" });
+  const access = validToken.token.access;
+
+  if (!validToken.valid) {
+    res.status(401).send({ error: "Unauthorized Token" });
+  }
+
+  switch (access) {
+    case "ADMIN":
+      next();
+      break;
+    case "READWRITEDELETE":
+      next();
+      break;
+    case "READONLY":
+      if (method != "GET") {
+        res
+          .status(401)
+          .send({ error: `Unauthorized to make '${method}' request` });
+      } else {
+        next();
+      }
+      break;
+    case "READWRITE":
+      if (method != "GET" && method != "POST" && method != "PUT") {
+        res
+          .status(401)
+          .send({ error: `Unauthorized to make '${method}' request` });
+      } else {
+        next();
+      }
+      break;
   }
 }
-
 app.use(accessHandler);
 
+//Handle Errors
 function errorHandler(
   err: Error,
   req: Request,
@@ -42,6 +92,7 @@ function errorHandler(
 }
 app.use(errorHandler);
 
+//Log the Requests
 async function logRequest(req: Request, res: Response, next: NextFunction) {
   const token = req.headers.token;
   const tokenData = await db.validateToken(token as string);
@@ -57,7 +108,7 @@ logRequest;
 
 app.use(logRequest);
 
-//Teams Routes
+//-------------------------------Teams Routes-------------------------------
 //get teams by name /teams?name={name}
 app.get("/teams", async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -97,6 +148,12 @@ app.post("/teams", async (req: Request, res: Response, next: NextFunction) => {
       name: req.query.name as string,
       eq_elo: parseInt(req.query.eq_elo as string),
       trained_elo: parseInt(req.query.trained_elo as string),
+      totalEqMatches: 0,
+      totalEqMatchesWon: 0,
+      totalEqMatchesLost: 0,
+      mu: new Decimal(req.query.mu as string),
+      sigma: new Decimal(req.query.sigma as string),
+      ranking: new Decimal(req.query.ranking as string),
     });
     res.json({ message: "Team Created" });
   } catch (error) {
@@ -113,6 +170,12 @@ app.put(
         name: req.query.name as string,
         eq_elo: parseInt(req.query.eq_elo as string),
         trained_elo: parseInt(req.query.trained_elo as string),
+        totalEqMatches: 0,
+        totalEqMatchesWon: 0,
+        totalEqMatchesLost: 0,
+        mu: new Decimal(req.query.mu as string),
+        sigma: new Decimal(req.query.sigma as string),
+        ranking: new Decimal(req.query.ranking as string),
       });
       res.json({ message: "Team Updated" });
     } catch (error) {
