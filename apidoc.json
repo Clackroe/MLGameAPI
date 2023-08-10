@@ -1,0 +1,5 @@
+{
+  "name": "VESL Roboverse API",
+  "version": "0.1.0",
+  "description": "Interact with the live VESL Roboverse Database"
+}

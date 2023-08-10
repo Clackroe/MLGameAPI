@@ -1,6 +1,7 @@
 generator client {
   provider        = "prisma-client-js"
   previewFeatures = ["views"]
+  connectionLimit = "30"
 }
 
 datasource db {
@@ -48,7 +49,10 @@ model Equation {
 model EquationMatch {
   id                  String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   type                String                @default("Casual")
-  timestamp           DateTime?             @db.Timestamp(6)
+  ended               DateTime?             @db.Timestamp(6)
+  planned_start       DateTime?             @db.Timestamp(6)
+  started             DateTime?             @db.Timestamp(6)
+  status              MatchStatus           @default(PENDING)
   TeamInEquationMatch TeamInEquationMatch[]
 }
 
@@ -73,14 +77,17 @@ model Session {
 model Team {
   id                  String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name                String                @unique @db.VarChar(255)
-  eq_elo              Int                   @default(1000)
-  trained_elo         Int                   @default(1000)
   totalEqMatches      Int                   @default(0)
   totalEqMatchesWon   Int                   @default(0)
   totalEqMatchesLost  Int                   @default(0)
   mu                  Decimal?              @default(25) @db.Decimal
   sigma               Decimal?              @default(8.3333333333) @db.Decimal
   ranking             Decimal?              @db.Decimal
+  accent              String?               @default("#40ba0b") @db.VarChar(255)
+  logo                String?               @db.VarChar(255)
+  primary             String?               @default("#a69977") @db.VarChar(255)
+  screen              String?               @default("#ffffff") @db.VarChar(255)
+  secondary           String?               @default("#292826") @db.VarChar(255)
   Equation            Equation[]
   Job                 Job[]
   TeamEqEloHistory    TeamEqEloHistory[]
@@ -99,6 +106,7 @@ model TeamInEquationMatch {
   sigma_after     Decimal?      @db.Decimal
   mu_before       Decimal?      @db.Decimal
   sigma_before    Decimal?      @db.Decimal
+  ranking_after   Decimal?      @db.Decimal
   Equation        Equation      @relation(fields: [equationID], references: [id])
   EquationMatch   EquationMatch @relation(fields: [equationMatchId], references: [id])
   Team            Team          @relation(fields: [teamId], references: [id])
@@ -135,17 +143,6 @@ model TeamEqEloHistory {
   Team      Team     @relation(fields: [teamId], references: [id], onUpdate: Restrict)
 }
 
-/// The underlying view does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
-view TeamView {
-  team_id         String  @id @db.Uuid
-  name            String? @db.VarChar(255)
-  eq_elo          Int?
-  trained_elo     Int?
-  eqmatcheswon    BigInt?
-  eqmatcheslost   BigInt?
-  eqmatchesplayed BigInt?
-}
-
 enum ApiAccess {
   READONLY
   READWRITE
@@ -158,4 +155,13 @@ enum enums_jobs_status {
   PROCESSING
   COMPLETED
   FAILED
+}
+
+enum MatchStatus {
+  PENDING
+  PLANNED
+  STARTED
+  INPROGRESS
+  FINISHED
+  CANCELLED
 }

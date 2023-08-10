@@ -5,6 +5,9 @@ type teamMatchRating = {
   sigma_after?: number;
   mu_before: number;
   score: number;
+  teamId: string;
+  matchId: string;
+  teamInEquationMatchID: string;
 };
 interface ratedTeamMatch extends teamMatchRating {
   mu_after: number;
