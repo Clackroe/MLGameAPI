@@ -5,8 +5,10 @@ import {
   /*TrainedMatch,*/ EquationMatch,
   Equation,
   /*Model,*/ Job /*VerificationToken*/,
+  TeamInEquationMatch,
 } from "@prisma/client";
 // import e from "express";
+import * as rank from "./ranking";
 
 const prisma = new PrismaClient();
 
@@ -16,7 +18,13 @@ export async function upsertEquationMatch(data: EquationMatch) {
   try {
     const eqmatch = await prisma.equationMatch.upsert({
       where: { id: data.id },
-      create: data,
+      create: {
+        type: data.type || undefined,
+        status: data.status || undefined,
+        started: data.started || undefined,
+        ended: data.ended || undefined,
+        planned_start: data.planned_start || undefined,
+      },
       update: data,
     });
     return eqmatch;
@@ -77,8 +85,28 @@ export async function upsertTeam(data: Team) {
   try {
     const team = await prisma.team.upsert({
       where: { id: data.id },
-      create: data,
-      update: data,
+      create: {
+        name: data.name,
+        totalEqMatches: data.totalEqMatches || 0,
+        totalEqMatchesWon: data.totalEqMatchesWon || 0,
+        totalEqMatchesLost: data.totalEqMatchesLost || 0,
+        accent: data.accent || undefined,
+        logo: data.logo || undefined,
+        primary: data.primary || undefined,
+        secondary: data.secondary || undefined,
+        screen: data.screen || undefined,
+      },
+      update: {
+        name: data.name || undefined,
+        totalEqMatches: data.totalEqMatches || undefined,
+        totalEqMatchesWon: data.totalEqMatchesWon || undefined,
+        totalEqMatchesLost: data.totalEqMatchesLost || undefined,
+        accent: data.accent || undefined,
+        logo: data.logo || undefined,
+        primary: data.primary || undefined,
+        secondary: data.secondary || undefined,
+        screen: data.screen || undefined,
+      },
     });
     return team;
   } catch (error) {
@@ -140,8 +168,22 @@ export async function upsertUser(data: User) {
   try {
     const user = await prisma.user.upsert({
       where: { id: data.id },
-      create: data,
-      update: data,
+      create: {
+        name: data.name || undefined,
+        email: data.email || undefined,
+        epic_id: data.epic_id || undefined,
+        discord_id: data.discord_id || undefined,
+        team_id: data.team_id || undefined,
+        image: data.image || undefined,
+      },
+      update: {
+        name: data.name || undefined,
+        email: data.email || undefined,
+        epic_id: data.epic_id || undefined,
+        discord_id: data.discord_id || undefined,
+        team_id: data.team_id || undefined,
+        image: data.image || undefined,
+      },
     });
     return user;
   } catch (error) {
@@ -203,8 +245,18 @@ export async function upsertEquation(data: Equation) {
     console.log(data);
     const eq = await prisma.equation.upsert({
       where: { id: data.id },
-      create: data,
-      update: data,
+      create: {
+        name: data.name || undefined,
+        team_id: data.team_id || undefined,
+        elo_contribute: data.elo_contribute || undefined,
+        content: data.content || undefined,
+      },
+      update: {
+        name: data.name || undefined,
+        team_id: data.team_id || undefined,
+        elo_contribute: data.elo_contribute || undefined,
+        content: data.content || undefined,
+      },
     });
     return eq;
   } catch (error) {
@@ -475,6 +527,116 @@ export async function getEquationMatchesByTeamId(id: string) {
   } catch (error) {
     console.error("Error getting matches", error);
     throw new Error("Failed to get matches from team");
+  }
+}
+
+// -------------------------------- TeamInEquationMatch --------------------------------
+
+export async function getTeamInEquationMatchesByMatchID(id: string) {
+  try {
+    const teamInEquationMatch = await prisma.teamInEquationMatch.findMany({
+      where: {
+        equationMatchId: id,
+      },
+      include: {
+        Equation: true,
+        Team: true,
+        EquationMatch: true,
+      },
+    });
+
+    return teamInEquationMatch;
+  } catch (error) {
+    console.error("Error getting TeamInEquationMatch");
+  }
+}
+
+export async function upsertTeamInEquationmatch(data: TeamInEquationMatch) {
+  try {
+    const team = await prisma.team.findUnique({
+      where: {
+        id: data.teamId,
+      },
+    });
+
+    const teamInEquationMatch = await prisma.teamInEquationMatch.upsert({
+      where: { id: data.id },
+      create: {
+        ...data,
+        mu_before: team.mu,
+        sigma_before: team.sigma,
+      },
+      update: data,
+    });
+    return teamInEquationMatch;
+  } catch (error) {
+    console.error("Error upserting TeamInEquationMatch:", error);
+    throw new Error("Failed to upsert TeamInEquationMatch.");
+  }
+}
+
+export async function deleteTeamInEquationMatch(id: string) {
+  try {
+    const teamInEquationMatch = await prisma.teamInEquationMatch.delete({
+      where: { id: id },
+    });
+    return teamInEquationMatch;
+  } catch (error) {
+    console.error("Error deleting TeamInEquationMatch:", error);
+    throw new Error("Failed to delete TeamInEquationMatch.");
+  }
+}
+
+export async function updateEquationMatchTeamMuSigma(eqMatchID: string) {
+  try {
+    const match = await prisma.equationMatch.findUnique({
+      where: {
+        id: eqMatchID,
+      },
+      include: {
+        TeamInEquationMatch: true,
+      },
+    });
+
+    const teams = match.TeamInEquationMatch.map((team: TeamInEquationMatch) => {
+      return {
+        sigma_before: team.sigma_before.toNumber(),
+        // sigma_after: team.sigma_after.toNumber() || undefined,
+        mu_before: team.mu_before.toNumber(),
+        score: team.score,
+        teamId: team.teamId,
+        matchId: team.equationMatchId,
+        teamInEquationMatchID: team.id,
+      };
+    });
+
+    const scores = rank.calculateRankings(teams);
+
+    for (const score of scores) {
+      await prisma.team.update({
+        where: {
+          id: score.teamId,
+        },
+        data: {
+          mu: score.mu_after,
+          sigma: score.sigma_after,
+          ranking: score.ranking,
+        },
+      });
+      await prisma.teamInEquationMatch.update({
+        where: {
+          id: score.teamInEquationMatchID,
+        },
+        data: {
+          mu_after: score.mu_after,
+          sigma_after: score.sigma_after,
+          ranking_after: score.ranking,
+        },
+      });
+    }
+  } catch (error) {
+    console.error("Error updating EquationMatch Team Mu Sigma:", error);
+    throw new Error("Failed to update EquationMatch Team Mu Sigma.");
   }
 }
 

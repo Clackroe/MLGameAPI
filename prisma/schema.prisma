@@ -1,6 +1,7 @@
 generator client {
   provider        = "prisma-client-js"
   previewFeatures = ["views"]
+  connectionLimit = "30"
 }
 
 datasource db {
@@ -9,7 +10,7 @@ datasource db {
 }
 
 model Account {
-  id                String  @id
+  id                String  @id @default(dbgenerated("gen_random_uuid()"))
   userId            String  @db.Uuid
   type              String
   provider          String
@@ -27,15 +28,14 @@ model Account {
 }
 
 model ApiToken {
-  id         String    @id @default(uuid()) @db.Uuid
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   created_at DateTime  @default(now()) @db.Timestamp(6)
   name       String    @unique
   access     ApiAccess
-  token      String    @unique
 }
 
 model Equation {
-  id                  String                @id @db.Uuid
+  id                  String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name                String                @db.VarChar(255)
   user_id             String?               @db.Uuid
   team_id             String?               @db.Uuid
@@ -47,14 +47,17 @@ model Equation {
 }
 
 model EquationMatch {
-  id                  String                @id @db.Uuid
+  id                  String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   type                String                @default("Casual")
-  timestamp           DateTime?             @db.Timestamp(6)
+  ended               DateTime?             @db.Timestamp(6)
+  planned_start       DateTime?             @db.Timestamp(6)
+  started             DateTime?             @db.Timestamp(6)
+  status              MatchStatus           @default(PENDING)
   TeamInEquationMatch TeamInEquationMatch[]
 }
 
 model Job {
-  id        String            @id @db.Uuid
+  id        String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   createdAt DateTime          @default(now()) @db.Timestamp(6)
   team_id   String            @db.Uuid
   payload   String
@@ -66,18 +69,28 @@ model Job {
 model Session {
   expires      DateTime
   sessionToken String   @unique
-  id           String   @id @db.Uuid
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   userId       String   @db.Uuid
   User         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Team {
-  id                  String                @id @db.Uuid
+  id                  String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name                String                @unique @db.VarChar(255)
-  eq_elo              Int                   @default(1000)
-  trained_elo         Int                   @default(1000)
+  totalEqMatches      Int                   @default(0)
+  totalEqMatchesWon   Int                   @default(0)
+  totalEqMatchesLost  Int                   @default(0)
+  mu                  Decimal?              @default(25) @db.Decimal
+  sigma               Decimal?              @default(8.3333333333) @db.Decimal
+  ranking             Decimal?              @db.Decimal
+  accent              String?               @default("#40ba0b") @db.VarChar(255)
+  logo                String?               @db.VarChar(255)
+  primary             String?               @default("#a69977") @db.VarChar(255)
+  screen              String?               @default("#ffffff") @db.VarChar(255)
+  secondary           String?               @default("#292826") @db.VarChar(255)
   Equation            Equation[]
   Job                 Job[]
+  TeamEqEloHistory    TeamEqEloHistory[]
   TeamInEquationMatch TeamInEquationMatch[]
   User                User[]
 }
@@ -88,15 +101,19 @@ model TeamInEquationMatch {
   score           Int?          @default(0)
   equationID      String        @db.Uuid
   winner          Boolean?      @default(false)
+  id              String        @id @unique @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  mu_after        Decimal?      @db.Decimal
+  sigma_after     Decimal?      @db.Decimal
+  mu_before       Decimal?      @db.Decimal
+  sigma_before    Decimal?      @db.Decimal
+  ranking_after   Decimal?      @db.Decimal
   Equation        Equation      @relation(fields: [equationID], references: [id])
   EquationMatch   EquationMatch @relation(fields: [equationMatchId], references: [id])
   Team            Team          @relation(fields: [teamId], references: [id])
-
-  @@id([equationMatchId, teamId])
 }
 
 model User {
-  id            String     @id @db.Uuid
+  id            String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name          String     @unique @db.VarChar(255)
   epic_id       String?    @unique @db.VarChar(255)
   email         String?    @unique
@@ -118,21 +135,19 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
-/// The underlying view does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
-view TeamView {
-  team_id         String  @id @db.Uuid
-  name            String? @db.VarChar(255)
-  eq_elo          Int?
-  trained_elo     Int?
-  eqmatcheswon    BigInt?
-  eqmatcheslost   BigInt?
-  eqmatchesplayed BigInt?
+model TeamEqEloHistory {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  teamId    String   @db.Uuid
+  elo       Int
+  timestamp DateTime @db.Timestamp(6)
+  Team      Team     @relation(fields: [teamId], references: [id], onUpdate: Restrict)
 }
 
 enum ApiAccess {
   READONLY
   READWRITE
   READWRITEDELETE
+  ADMIN
 }
 
 enum enums_jobs_status {
@@ -140,4 +155,13 @@ enum enums_jobs_status {
   PROCESSING
   COMPLETED
   FAILED
+}
+
+enum MatchStatus {
+  PENDING
+  PLANNED
+  STARTED
+  INPROGRESS
+  FINISHED
+  CANCELLED
 }

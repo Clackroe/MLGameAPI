@@ -3,29 +3,79 @@ import { NextFunction, Request, Response } from "express";
 import express from "express";
 import { v4 as uuidv4 } from "uuid";
 const app = express();
-const port = 3000; // default port to listen
+const port = 3001; // default port to listen
+
+import { MatchStatus } from "@prisma/client";
+
+import rateLimit from "express-rate-limit";
 
 import * as db from "./db";
-import * as dock from "./docker-utils";
 
+//-------------------------------Middleware-------------------------------
+
+//Authorize Access
 async function accessHandler(req: Request, res: Response, next: NextFunction) {
+  const method = req.method as string;
   const token = req.headers.token;
   if (!token) {
     return res
       .status(401)
       .send({ error: "Unauthorized | No Credentials Sent!" });
   }
-
   const validToken = await db.validateToken(token as string);
-  if (validToken.valid) {
-    next();
-  } else {
-    res.status(401).send({ error: "Unauthorized" });
+  const access = validToken.token.access;
+
+  if (!validToken.valid) {
+    res.status(401).send({ error: "Unauthorized Token" });
+  }
+
+  switch (access) {
+    case "ADMIN":
+      next();
+      break;
+    case "READWRITEDELETE":
+      next();
+      break;
+    case "READONLY":
+      if (method != "GET") {
+        res
+          .status(401)
+          .send({ error: `Unauthorized to make '${method}' request` });
+      } else {
+        next();
+      }
+      break;
+    case "READWRITE":
+      if (method != "GET" && method != "POST" && method != "PUT") {
+        res
+          .status(401)
+          .send({ error: `Unauthorized to make '${method}' request` });
+      } else {
+        next();
+      }
+      break;
   }
 }
-
 app.use(accessHandler);
 
+//RateLimiter
+const limiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // hour
+  max: 2000, // Limit each IP to 2000 requests per `window` per hour
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  skip: async (request) => {
+    //Skip admin tokens
+    const valid = await db.validateToken(request.headers.token as string);
+    return valid.token.access == "ADMIN";
+  },
+  message:
+    "You have reached your maximum number of requests this hour, try again soon.",
+});
+
+app.use(limiter);
+
+//Handle Errors
 function errorHandler(
   err: Error,
   req: Request,
@@ -42,6 +92,7 @@ function errorHandler(
 }
 app.use(errorHandler);
 
+//Log the Requests
 async function logRequest(req: Request, res: Response, next: NextFunction) {
   const token = req.headers.token;
   const tokenData = await db.validateToken(token as string);
@@ -57,8 +108,69 @@ logRequest;
 
 app.use(logRequest);
 
-//Teams Routes
+//-------------------------------Teams Routes-------------------------------
 //get teams by name /teams?name={name}
+
+//apiDoc annotations
+
+/**
+ * @api {get} /teams Get Teams
+ * @apiName GetTeams
+ * @apiGroup Teams
+ *
+ * @apiParam {String} [name] Filter teams by name.
+ *
+ * @apiSuccess {Object[]} teams List of teams.
+ *
+ * @apiSuccessExample Success-Response:
+ *   HTTP/1.1 200 OK
+ *   {
+ *     "teams": [
+ *       {
+ *         "id": "team-id",
+ *         "name": "Team Name",
+ *       },
+ *       // ...other teams
+ *     ]
+ *   }
+ * @apiSuccessExample Success-Response:
+ *  HTTP/1.1 200 OK
+ * {
+ *  "teams": [
+ *   {
+ *    "id": "team-id",
+ *   "name": "Team Name",
+ *    "totalEqMatches": 0,
+ *   "totalEqMatchesWon": 0,
+ *  "totalEqMatchesLost": 0,
+ *    "mu": 0,
+ *  "sigma": 0,
+ *    "ranking": 0,
+ *     "accent": "#000000",
+ *     "logo": "https://www.example.com/logo.png",
+ *     "primary": "#000000",
+ *     "secondary": "#000000",
+ *     "User":[
+ *      {
+ *    "id": "user-id",
+ *   "name": "User Name",
+ *     "email": "example@email.com",
+ *     "image": "https://www.example.com/image.png",
+ *     "teamId": "team-id",
+ *     "discord_id": "discord-id",
+ *     }]
+ *
+ * }
+ *
+ *
+ * @apiErrorExample Error-Response:
+ *   HTTP/1.1 500 Internal Server Error
+ *   {
+ *     "error": "Something went wrong!",
+ *     "name": "Error",
+ *     "message": "Error retrieving team."
+ *   }
+ */
 app.get("/teams", async (req: Request, res: Response, next: NextFunction) => {
   try {
     //get teams by name /teams?name={name}
@@ -90,13 +202,46 @@ app.get(
   }
 );
 
+/**
+ * @api {post} /teams Create Team
+ * @apiName CreateTeam
+ * @apiGroup Teams
+ *
+ * @apiQuery {String} name Team name.
+ * // ...other parameters
+ *
+ * @apiSuccess {String} message Success message.
+ *
+ * @apiSuccessExample Success-Response:
+ *   HTTP/1.1 200 OK
+ *   {
+ *     "message": "Team Created"
+ *   }
+ *
+ * @apiErrorExample Error-Response:
+ *   HTTP/1.1 500 Internal Server Error
+ *   {
+ *     "error": "Something went wrong!",
+ *     "name": "Error",
+ *     "message": "Error message
+ *   }
+ */
 app.post("/teams", async (req: Request, res: Response, next: NextFunction) => {
   try {
     await db.upsertTeam({
       id: uuidv4(),
-      name: req.query.name as string,
-      eq_elo: parseInt(req.query.eq_elo as string),
-      trained_elo: parseInt(req.query.trained_elo as string),
+      name: (req.query.name as string) || undefined,
+      totalEqMatches: undefined,
+      totalEqMatchesWon: undefined,
+      totalEqMatchesLost: undefined,
+      mu: undefined,
+      sigma: undefined,
+      ranking: undefined,
+      accent: (req.query.accent as string) || undefined,
+      logo: (req.query.logo as string) || undefined,
+      primary: (req.query.primary as string) || undefined,
+      screen: (req.query.screen as string) || undefined,
+      secondary: (req.query.secondary as string) || undefined,
     });
     res.json({ message: "Team Created" });
   } catch (error) {
@@ -109,10 +254,19 @@ app.put(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       await db.upsertTeam({
-        id: req.params.id as string,
-        name: req.query.name as string,
-        eq_elo: parseInt(req.query.eq_elo as string),
-        trained_elo: parseInt(req.query.trained_elo as string),
+        id: (req.params.id as string) || undefined,
+        name: (req.query.name as string) || undefined,
+        totalEqMatches: undefined,
+        totalEqMatchesWon: undefined,
+        totalEqMatchesLost: undefined,
+        mu: undefined,
+        sigma: undefined,
+        ranking: undefined,
+        accent: (req.query.accent as string) || undefined,
+        logo: (req.query.logo as string) || undefined,
+        primary: (req.query.primary as string) || undefined,
+        screen: (req.query.screen as string) || undefined,
+        secondary: (req.query.secondary as string) || undefined,
       });
       res.json({ message: "Team Updated" });
     } catch (error) {
@@ -138,12 +292,12 @@ app.delete(
 app.get("/players", async (req: Request, res: Response, next: NextFunction) => {
   try {
     const epic_id = req.query.epic_id as string;
-    const discord_id = req.query.discord_id as string;
+    const name = req.query.name as string;
     if (epic_id) {
       const player = await db.getUserByEpicId(epic_id);
       res.json(player);
-    } else if (discord_id) {
-      const player = await db.getUserByName(discord_id);
+    } else if (name) {
+      const player = await db.getUserByName(name);
       res.json(player);
     } else {
       const players = await db.getAllUsers();
@@ -173,15 +327,36 @@ app.post(
     try {
       await db.upsertUser({
         id: uuidv4(),
-        name: req.query.name as string,
-        epic_id: req.query.epic_id as string,
-        discord_id: req.query.discord_id as string,
-        team_id: req.query.team_id as string,
-        email: req.query.email as string,
-        image: req.query.image as string,
+        name: (req.query.name as string) || undefined,
+        epic_id: (req.query.epic_id as string) || undefined,
+        discord_id: (req.query.discord_id as string) || undefined,
+        team_id: (req.query.team_id as string) || undefined,
+        email: (req.query.email as string) || undefined,
+        image: (req.query.image as string) || undefined,
         emailVerified: undefined,
       });
       res.json({ message: "Player Created" });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+app.put(
+  "/players/:id",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      await db.upsertUser({
+        id: (req.params.id as string) || undefined,
+        name: (req.query.name as string) || undefined,
+        epic_id: (req.query.epic_id as string) || undefined,
+        discord_id: (req.query.discord_id as string) || undefined,
+        team_id: (req.query.team_id as string) || undefined,
+        email: (req.query.email as string) || undefined,
+        image: (req.query.image as string) || undefined,
+        emailVerified: undefined,
+      });
+      res.json({ message: "Player Updated" });
     } catch (error) {
       next(error);
     }
@@ -200,7 +375,9 @@ app.delete(
   }
 );
 
-// //Matches Routes
+// ------------------------- EquationMatch Routes -------------------------
+
+3; // //Matches Routes
 // Can also get matches by team_id /matches?team_id={team_id} or team_name /matches?team_name={team_name} or by model_id /matches?model_id={model_id}
 app.get("/matches", async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -237,13 +414,38 @@ app.get(
 app.post(
   "/matches",
   async (req: Request, res: Response, next: NextFunction) => {
+    const status = (req.query.status as MatchStatus) || undefined; // Cast to MatchStatus
+    const id = uuidv4();
     try {
       await db.upsertEquationMatch({
-        id: req.query.id as string,
+        id: id,
         type: req.query.type as string,
-        timestamp: undefined,
+        status: status,
+        started: new Date(req.query.started as string) || undefined, // Provide a value for started
+        ended: new Date(req.query.started as string) || undefined,
+        planned_start: new Date(req.query.started as string) || undefined,
       });
-      res.json({ message: "Match Created" });
+      res.json({ message: "Match Created", id: id });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+app.put(
+  "/matches/:id",
+  async (req: Request, res: Response, next: NextFunction) => {
+    const status = (req.query.status as MatchStatus) || undefined; // Cast to MatchStatus
+    try {
+      await db.upsertEquationMatch({
+        id: req.params.id,
+        type: req.query.type as string,
+        status: status,
+        started: new Date(req.query.started as string) || undefined, // Provide a value for started
+        ended: new Date(req.query.started as string) || undefined,
+        planned_start: new Date(req.query.started as string) || undefined,
+      });
+      res.json({ message: "Match Updated", id: req.params.id });
     } catch (error) {
       next(error);
     }
@@ -261,6 +463,8 @@ app.delete(
     }
   }
 );
+
+// ------------------------- Equation Routes -------------------------
 
 app.get(
   "/equations",
@@ -295,11 +499,12 @@ app.post(
     try {
       await db.upsertEquation({
         id: uuidv4(),
-        name: req.query.name as string,
-        team_id: req.query.team_id as string,
-        user_id: req.query.user_id as string,
-        elo_contribute: 0,
-        content: req.query.content,
+        name: (req.query.name as string) || undefined,
+        team_id: (req.query.team_id as string) || undefined,
+        user_id: (req.query.user_id as string) || undefined,
+        elo_contribute:
+          parseInt(req.query.elo_contribute as string) || undefined,
+        content: req.query.content || undefined,
       });
       res.json({ message: "Equation Created" });
     } catch (error) {
@@ -313,12 +518,13 @@ app.put(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       await db.upsertEquation({
-        id: req.params.id as string,
-        name: req.query.name as string,
-        team_id: req.query.team_id as string,
-        user_id: req.query.user_id as string,
-        elo_contribute: parseInt(req.query.elo_contribute as string),
-        content: req.query.content,
+        id: (req.params.id as string) || undefined,
+        name: (req.query.name as string) || undefined,
+        team_id: (req.query.team_id as string) || undefined,
+        user_id: (req.query.user_id as string) || undefined,
+        elo_contribute:
+          parseInt(req.query.elo_contribute as string) || undefined,
+        content: req.query.content || undefined,
       });
       res.json({ message: "Equation Updated" });
     } catch (error) {
@@ -326,12 +532,6 @@ app.put(
     }
   }
 );
-
-app.get("/testDocker", async (req: Request, res: Response) => {
-  dock.testFunc();
-
-  res.send({ message: "Hello World!" });
-});
 
 // start server
 app.listen(port, () => {
