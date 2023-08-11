@@ -142,14 +142,6 @@ export async function main() {
   }
 }
 
-// async function test() {
-//   const eqMatches2 = await prisma.equationMatch.findMany();
-//   for (const eqMatch of eqMatches2) {
-//     // console.log(eqMatch.id);
-//     await db.updateEquationMatchTeamMuSigma(eqMatch.id);
-//   }
-// }
-
 try {
   main();
 } catch (e) {
