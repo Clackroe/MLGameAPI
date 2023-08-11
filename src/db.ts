@@ -634,9 +634,49 @@ export async function updateEquationMatchTeamMuSigma(eqMatchID: string) {
         },
       });
     }
+    await prisma.equationMatch.update({
+      where: {
+        id: eqMatchID,
+      },
+      data: {
+        ended: new Date(),
+        status: "FINISHED",
+      },
+    });
   } catch (error) {
     console.error("Error updating EquationMatch Team Mu Sigma:", error);
     throw new Error("Failed to update EquationMatch Team Mu Sigma.");
+  }
+}
+
+export async function addTeamToEquationMatch(
+  matchID: string,
+  equationID: string,
+  teamID: string,
+  score: number,
+  winner: boolean
+) {
+  try {
+    const team = await prisma.team.findUnique({
+      where: {
+        id: teamID,
+      },
+    });
+    const match = await prisma.teamInEquationMatch.create({
+      data: {
+        equationMatchId: matchID,
+        equationID: equationID,
+        teamId: teamID,
+        mu_before: team.mu,
+        sigma_before: team.sigma,
+        score: score,
+        winner: winner,
+      },
+    });
+    return match.equationMatchId;
+  } catch (error) {
+    console.error("Error adding team", error);
+    throw new Error("Failed to add team to the match...");
   }
 }
 

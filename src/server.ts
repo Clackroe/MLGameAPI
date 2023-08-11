@@ -111,66 +111,6 @@ app.use(logRequest);
 //-------------------------------Teams Routes-------------------------------
 //get teams by name /teams?name={name}
 
-//apiDoc annotations
-
-/**
- * @api {get} /teams Get Teams
- * @apiName GetTeams
- * @apiGroup Teams
- *
- * @apiParam {String} [name] Filter teams by name.
- *
- * @apiSuccess {Object[]} teams List of teams.
- *
- * @apiSuccessExample Success-Response:
- *   HTTP/1.1 200 OK
- *   {
- *     "teams": [
- *       {
- *         "id": "team-id",
- *         "name": "Team Name",
- *       },
- *       // ...other teams
- *     ]
- *   }
- * @apiSuccessExample Success-Response:
- *  HTTP/1.1 200 OK
- * {
- *  "teams": [
- *   {
- *    "id": "team-id",
- *   "name": "Team Name",
- *    "totalEqMatches": 0,
- *   "totalEqMatchesWon": 0,
- *  "totalEqMatchesLost": 0,
- *    "mu": 0,
- *  "sigma": 0,
- *    "ranking": 0,
- *     "accent": "#000000",
- *     "logo": "https://www.example.com/logo.png",
- *     "primary": "#000000",
- *     "secondary": "#000000",
- *     "User":[
- *      {
- *    "id": "user-id",
- *   "name": "User Name",
- *     "email": "example@email.com",
- *     "image": "https://www.example.com/image.png",
- *     "teamId": "team-id",
- *     "discord_id": "discord-id",
- *     }]
- *
- * }
- *
- *
- * @apiErrorExample Error-Response:
- *   HTTP/1.1 500 Internal Server Error
- *   {
- *     "error": "Something went wrong!",
- *     "name": "Error",
- *     "message": "Error retrieving team."
- *   }
- */
 app.get("/teams", async (req: Request, res: Response, next: NextFunction) => {
   try {
     //get teams by name /teams?name={name}
@@ -202,30 +142,6 @@ app.get(
   }
 );
 
-/**
- * @api {post} /teams Create Team
- * @apiName CreateTeam
- * @apiGroup Teams
- *
- * @apiQuery {String} name Team name.
- * // ...other parameters
- *
- * @apiSuccess {String} message Success message.
- *
- * @apiSuccessExample Success-Response:
- *   HTTP/1.1 200 OK
- *   {
- *     "message": "Team Created"
- *   }
- *
- * @apiErrorExample Error-Response:
- *   HTTP/1.1 500 Internal Server Error
- *   {
- *     "error": "Something went wrong!",
- *     "name": "Error",
- *     "message": "Error message
- *   }
- */
 app.post("/teams", async (req: Request, res: Response, next: NextFunction) => {
   try {
     await db.upsertTeam({
@@ -377,17 +293,13 @@ app.delete(
 
 // ------------------------- EquationMatch Routes -------------------------
 
-3; // //Matches Routes
+// //Matches Routes
 // Can also get matches by team_id /matches?team_id={team_id} or team_name /matches?team_name={team_name} or by model_id /matches?model_id={model_id}
 app.get("/matches", async (req: Request, res: Response, next: NextFunction) => {
   try {
     const team_id = req.query.team_id as string;
-    const team_name = req.query.team_name as string;
     if (team_id) {
-      const matches = await db.getEquationMatchById(team_id);
-      res.json(matches);
-    } else if (team_name) {
-      const matches = await db.getEquationMatchesByTeamId(team_name);
+      const matches = await db.getEquationMatchesByTeamId(team_id);
       res.json(matches);
     } else {
       const matches = await db.getAllMatches();
@@ -414,10 +326,11 @@ app.get(
 app.post(
   "/matches",
   async (req: Request, res: Response, next: NextFunction) => {
-    const status = (req.query.status as MatchStatus) || undefined; // Cast to MatchStatus
+    // Cast to MatchStatus "PENDING" | "PLANNED" | "STARTED" | "INPROGRESS" | "FINISHED" | "CANCELLED"
+    const status = (req.query.status as MatchStatus) || undefined;
     const id = uuidv4();
     try {
-      await db.upsertEquationMatch({
+      const match = await db.upsertEquationMatch({
         id: id,
         type: req.query.type as string,
         status: status,
@@ -425,7 +338,7 @@ app.post(
         ended: new Date(req.query.started as string) || undefined,
         planned_start: new Date(req.query.started as string) || undefined,
       });
-      res.json({ message: "Match Created", id: id });
+      res.json({ message: "Match Created", id: match.id });
     } catch (error) {
       next(error);
     }
@@ -464,6 +377,36 @@ app.delete(
   }
 );
 
+app.post(
+  "/matches/addTeam/:id",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const id = await db.addTeamToEquationMatch(
+        req.params.id as string,
+        req.params.equationId as string,
+        req.query.teamId as string,
+        parseInt(req.query.score as string),
+        Boolean(req.query.winner as string)
+      );
+      res.json({ message: "Team Added to Match", id: id });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+app.post(
+  "/matches/finishMatch/:id",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      db.updateEquationMatchTeamMuSigma(req.params.id);
+      res.json({ message: "Successfully finished match and calculations" });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
 // ------------------------- Equation Routes -------------------------
 
 app.get(
@@ -482,6 +425,19 @@ app.get(
         const equations = await db.getAllEquations();
         res.json({ equations });
       }
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+app.get(
+  "/equations/:id",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const id = req.params.id;
+      const equation = await db.getEquationById(id);
+      res.json(equation);
     } catch (error) {
       next(error);
     }
