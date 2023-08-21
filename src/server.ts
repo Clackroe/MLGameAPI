@@ -169,7 +169,7 @@ app.put(
   "/teams/:id",
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      await db.upsertTeam({
+      const team = await db.upsertTeam({
         id: (req.params.id as string) || undefined,
         name: (req.query.name as string) || undefined,
         totalEqMatches: undefined,
@@ -184,7 +184,7 @@ app.put(
         screen: (req.query.screen as string) || undefined,
         secondary: (req.query.secondary as string) || undefined,
       });
-      res.json({ message: "Team Updated" });
+      res.json({ message: "Team Updated", team_id: team.id });
     } catch (error) {
       next(error);
     }
@@ -262,7 +262,7 @@ app.put(
   "/players/:id",
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      await db.upsertUser({
+      const user = await db.upsertUser({
         id: (req.params.id as string) || undefined,
         name: (req.query.name as string) || undefined,
         epic_id: (req.query.epic_id as string) || undefined,
@@ -272,7 +272,7 @@ app.put(
         image: (req.query.image as string) || undefined,
         emailVerified: undefined,
       });
-      res.json({ message: "Player Updated" });
+      res.json({ message: "Player Updated", user_id: user.id });
     } catch (error) {
       next(error);
     }
@@ -350,7 +350,7 @@ app.put(
   async (req: Request, res: Response, next: NextFunction) => {
     const status = (req.query.status as MatchStatus) || undefined; // Cast to MatchStatus
     try {
-      await db.upsertEquationMatch({
+      const eqMatch = await db.upsertEquationMatch({
         id: req.params.id,
         type: req.query.type as string,
         status: status,
@@ -358,7 +358,7 @@ app.put(
         ended: new Date(req.query.started as string) || undefined,
         planned_start: new Date(req.query.started as string) || undefined,
       });
-      res.json({ message: "Match Updated", id: req.params.id });
+      res.json({ message: "Match Updated", id: eqMatch.id });
     } catch (error) {
       next(error);
     }
@@ -473,7 +473,7 @@ app.put(
   "/equations/:id",
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      await db.upsertEquation({
+      const eq = await db.upsertEquation({
         id: (req.params.id as string) || undefined,
         name: (req.query.name as string) || undefined,
         team_id: (req.query.team_id as string) || undefined,
@@ -482,7 +482,7 @@ app.put(
           parseInt(req.query.elo_contribute as string) || undefined,
         content: req.query.content || undefined,
       });
-      res.json({ message: "Equation Updated" });
+      res.json({ message: "Equation Updated", equationId: eq.id });
     } catch (error) {
       next(error);
     }
