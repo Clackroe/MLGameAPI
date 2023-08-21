@@ -21,6 +21,7 @@ export async function upsertEquationMatch(data: EquationMatch) {
       create: {
         type: data.type || undefined,
         status: data.status || undefined,
+
         started: data.started || undefined,
         ended: data.ended || undefined,
         planned_start: data.planned_start || undefined,
@@ -247,6 +248,7 @@ export async function upsertEquation(data: Equation) {
       where: { id: data.id },
       create: {
         name: data.name || undefined,
+        user_id: data.user_id || undefined,
         team_id: data.team_id || undefined,
         elo_contribute: data.elo_contribute || undefined,
         content: data.content || undefined,
@@ -254,6 +256,7 @@ export async function upsertEquation(data: Equation) {
       update: {
         name: data.name || undefined,
         team_id: data.team_id || undefined,
+        user_id: data.user_id || undefined,
         elo_contribute: data.elo_contribute || undefined,
         content: data.content || undefined,
       },
