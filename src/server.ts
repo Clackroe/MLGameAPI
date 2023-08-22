@@ -144,7 +144,7 @@ app.get(
 
 app.post("/teams", async (req: Request, res: Response, next: NextFunction) => {
   try {
-    await db.upsertTeam({
+    const team = await db.upsertTeam({
       id: uuidv4(),
       name: (req.query.name as string) || undefined,
       totalEqMatches: undefined,
@@ -159,7 +159,7 @@ app.post("/teams", async (req: Request, res: Response, next: NextFunction) => {
       screen: (req.query.screen as string) || undefined,
       secondary: (req.query.secondary as string) || undefined,
     });
-    res.json({ message: "Team Created" });
+    res.json({ message: "Team Created", team_id: team.id });
   } catch (error) {
     next(error);
   }
@@ -241,7 +241,7 @@ app.post(
   "/players",
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      await db.upsertUser({
+      const user = await db.upsertUser({
         id: uuidv4(),
         name: (req.query.name as string) || undefined,
         epic_id: (req.query.epic_id as string) || undefined,
@@ -251,7 +251,7 @@ app.post(
         image: (req.query.image as string) || undefined,
         emailVerified: undefined,
       });
-      res.json({ message: "Player Created" });
+      res.json({ message: "Player Created", user_id: user.id });
     } catch (error) {
       next(error);
     }
@@ -400,7 +400,10 @@ app.post(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       db.updateEquationMatchTeamMuSigma(req.params.id);
-      res.json({ message: "Successfully finished match and calculations" });
+      res.json({
+        message: "Successfully finished match and calculations",
+        id: req.params.id,
+      });
     } catch (error) {
       next(error);
     }
@@ -453,7 +456,7 @@ app.post(
 
     console.log("found elo_contribute to be undefined");
     try {
-      await db.upsertEquation({
+      const eq = await db.upsertEquation({
         id: uuidv4(),
         name: (req.query.name as string) || undefined,
         team_id: (req.query.team_id as string) || undefined,
@@ -462,7 +465,7 @@ app.post(
           parseInt(req.query.elo_contribute as string) || undefined,
         content: req.query.content || undefined,
       });
-      res.json({ message: "Equation Created" });
+      res.json({ message: "Equation Created", id: eq.id });
     } catch (error) {
       next(error);
     }
