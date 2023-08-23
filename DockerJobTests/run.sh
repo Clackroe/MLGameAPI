@@ -10,6 +10,8 @@ container_name="$1"
 sudo docker run -d -it --name "$container_name" \
   --mount type=bind,source="$(pwd)"/unity-volume,target=/unity-volume \
   -p 6006:6006 \
+  -p 5005:5005 \
   clackroe/test-soccer:latest \
-  mlagents-learn /unity-volume/Walker.yaml  --run-id=testRun --no-graphics --force \
-  --env=/unity-volume/walker-exec.x86_64
+  mlagents-learn /unity-volume/Walker.yaml  --run-id=testRun --no-graphics --force --env=/unity-volume/walker-exec.x86_64
+
+sudo docker exec -d -it $container_name tensorboard --logdir results/testRun --host 0.0.0.0 
