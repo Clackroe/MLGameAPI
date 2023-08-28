@@ -26,32 +26,30 @@ The API handles errors and returns appropriate status codes. If an error occurs,
 
 ## Endpoints
 
-| Endpoint                    | Method | Query Parameters                                                                                            | Description                               |
-|-----------------------------|--------|------------------------------------------------------------------------------------------------------------|-------------------------------------------|
-| `/teams`                    | GET    | None                                                                                                       | Get a list of all teams.                  |
-| `/teams/:id`                | GET    | None                                                                                                       | Get a team by its ID.                     |
-| `/teams`                    | GET    | `name` (string)                                                                                            | Get a team by its name.                   |
-| `/teams`                    | POST   | `name` (string)                                                                                            | Create a new team.                        |
-| `/teams/:id`                | PUT    | `name` (string)                                                                                            | Update an existing team by its ID.        |
-| `/teams/:id`                | DELETE | None                                                                                                       | Delete a team by its ID.                  |
-| `/players`                  | GET    | None                                                                                                       | Get a list of all players.                |
-| `/players/:id`              | GET    | None                                                                                                       | Get a player by their ID.                 |
-| `/players`                  | GET    | `epic_id` (string) OR `discord_id` (string)                                                                | Get a player by their Epic ID or Discord ID. |
-| `/players`                  | POST   | `name` (string), `epic_id` (string), `discord_id` (string), `team_id` (string, optional)                   | Create a new player.                      |
-| `/players/:id`              | PUT    | `name` (string), `epic_id` (string), `discord_id` (string), `team_id` (string, optional)                   | Update an existing player by their ID.    |
-| `/players/:id`              | DELETE | None                                                                                                       | Delete a player by their ID.              |
-| `/matches`                  | GET    | None                                                                                                       | Get a list of all matches.                |
-| `/matches/:id`              | GET    | None                                                                                                       | Get a match by its ID.                    |
-| `/matches`                  | GET    | `team_id` (string), `team_name` (string), `model_id` (string)                                              | Get matches by team ID, team name, or model ID. |
-| `/matches`                  | POST   | `team_1_id` (string), `team_2_id` (string), `team_1_model_id` (string), `team_2_model_id` (string), `team_1_score` (number, optional), `team_2_score` (number, optional), `timestamp` (string, optional), `type` (string, optional), `winning_team_id` (string, optional), `winning_model_id` (string, optional) | Create a new match.                       |
-| `/matches/:id`              | PUT    | `team_1_id` (string), `team_2_id` (string), `team_1_model_id` (string), `team_2_model_id` (string), `team_1_score` (number, optional), `team_2_score` (number, optional), `timestamp` (string, optional), `type` (string, optional), `winning_team_id` (string, optional), `winning_model_id` (string, optional) | Update an existing match by its ID.       |
-| `/matches/:id`              | DELETE | None                                                                                                       | Delete a match by its ID.                 |
-| `/models`                   | GET    | None                                                                                                       | Get a list of all models.                 |
-| `/models/:id`               | GET    | None                                                                                                       | Get a model by its ID.                    |
-| `/models`                   | GET    | `team_id` (string), `team_name` (string)                                                                   | Get models by team ID or team name.       |
-| `/models`                   | POST   | `name` (string), `team_id` (string), `url` (string)                                                        | Create a new model.                       |
-| `/models/:id`               | PUT    | `name` (string), `team_id` (string), `url` (string)                                                        | Update an existing model by its ID.       |
-| `/models/:id`               | DELETE | None                                                                                                       | Delete a model by its ID.                 |
+| Endpoint | Method | Description | Query Parameters |
+| Endpoint | Method | Description | Query Parameters |
+|-------------------------------------------|--------|----------------------------------------------------------|-----------------------------------------------------------------|
+| `/teams` | GET | Get a list of teams or filter by name. | `name`: Filter by team name. |
+| `/teams/:id` | GET | Get team details by ID. | |
+| `/teams` | POST | Create a new team. | |
+| `/teams/:id` | PUT | Update team details by ID. | |
+| `/teams/:id` | DELETE | Delete a team by ID. | |
+| `/players` | GET | Get a list of players or filter by Epic ID or name. | `epic_id`: Filter by player Epic ID, `name`: Filter by player name. |
+| `/players/:id` | GET | Get player details by ID. | |
+| `/players` | POST | Create a new player. | |
+| `/players/:id` | PUT | Update player details by ID. | |
+| `/players/:id` | DELETE | Delete a player by ID. | |
+| `/matches` | GET | Get a list of matches or filter by team ID or team name.| `team_id`: Filter by team ID, `team_name`: Filter by team name. |
+| `/matches/:id` | GET | Get match details by ID. | |
+| `/matches` | POST | Create a new match. | `type`: Match type, `status`: Match status, `started`: Match start date. |
+| `/matches/:id` | PUT | Update match details by ID. | `type`: Match type, `status`: Match status, `started`: Match start date. |
+| `/matches/:id` | DELETE | Delete a match by ID. | |
+| `/equations` | GET | Get a list of equations or filter by team ID or user ID.| `team_id`: Filter by team ID, `user_id`: Filter by user ID. |
+| `/equations/:id` | GET | Get equation details by ID. | |
+| `/equations` | POST | Create a new equation. | `name`: Equation name, `team_id`: Team ID, `user_id`: User ID, `elo_contribute`: Elo contribution, `content`: Equation content. |
+| `/equations/:id` | PUT | Update equation details by ID. | `name`: Equation name, `team_id`: Team ID, `user_id`: User ID, `elo_contribute`: Elo contribution, `content`: Equation content. |
+| `/matches/addTeam/:id` | POST | Add a team to a match. | `equationId`: Equation ID, `teamId`: Team ID, `score`: Team's score, `winner`: Boolean indicating if the team won. |
+| `/matches/finishMatch/:id` | POST | Finish a match and calculate team Mu and Sigma. | |
 
 ---
 

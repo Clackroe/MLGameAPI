@@ -3,29 +3,79 @@ import { NextFunction, Request, Response } from "express";
 import express from "express";
 import { v4 as uuidv4 } from "uuid";
 const app = express();
-const port = 3000; // default port to listen
+const port = 3001; // default port to listen
+
+import { MatchStatus } from "@prisma/client";
+
+import rateLimit from "express-rate-limit";
 
 import * as db from "./db";
-import * as dock from "./docker-utils";
 
+//-------------------------------Middleware-------------------------------
+
+//Authorize Access
 async function accessHandler(req: Request, res: Response, next: NextFunction) {
+  const method = req.method as string;
   const token = req.headers.token;
   if (!token) {
     return res
       .status(401)
       .send({ error: "Unauthorized | No Credentials Sent!" });
   }
-
   const validToken = await db.validateToken(token as string);
-  if (validToken.valid) {
-    next();
-  } else {
-    res.status(401).send({ error: "Unauthorized" });
+  const access = validToken.token.access;
+
+  if (!validToken.valid) {
+    res.status(401).send({ error: "Unauthorized Token" });
+  }
+
+  switch (access) {
+    case "ADMIN":
+      next();
+      break;
+    case "READWRITEDELETE":
+      next();
+      break;
+    case "READONLY":
+      if (method != "GET") {
+        res
+          .status(401)
+          .send({ error: `Unauthorized to make '${method}' request` });
+      } else {
+        next();
+      }
+      break;
+    case "READWRITE":
+      if (method != "GET" && method != "POST" && method != "PUT") {
+        res
+          .status(401)
+          .send({ error: `Unauthorized to make '${method}' request` });
+      } else {
+        next();
+      }
+      break;
   }
 }
-
 app.use(accessHandler);
 
+//RateLimiter
+const limiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // hour
+  max: 2000, // Limit each IP to 2000 requests per `window` per hour
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  skip: async (request) => {
+    //Skip admin tokens
+    const valid = await db.validateToken(request.headers.token as string);
+    return valid.token.access == "ADMIN";
+  },
+  message:
+    "You have reached your maximum number of requests this hour, try again soon.",
+});
+
+app.use(limiter);
+
+//Handle Errors
 function errorHandler(
   err: Error,
   req: Request,
@@ -42,6 +92,7 @@ function errorHandler(
 }
 app.use(errorHandler);
 
+//Log the Requests
 async function logRequest(req: Request, res: Response, next: NextFunction) {
   const token = req.headers.token;
   const tokenData = await db.validateToken(token as string);
@@ -57,8 +108,9 @@ logRequest;
 
 app.use(logRequest);
 
-//Teams Routes
+//-------------------------------Teams Routes-------------------------------
 //get teams by name /teams?name={name}
+
 app.get("/teams", async (req: Request, res: Response, next: NextFunction) => {
   try {
     //get teams by name /teams?name={name}
@@ -92,8 +144,22 @@ app.get(
 
 app.post("/teams", async (req: Request, res: Response, next: NextFunction) => {
   try {
-    await db.createTeam({ id: uuidv4(), name: req.query.name as string });
-    res.json({ message: "Team Created" });
+    const team = await db.upsertTeam({
+      id: uuidv4(),
+      name: (req.query.name as string) || undefined,
+      totalEqMatches: undefined,
+      totalEqMatchesWon: undefined,
+      totalEqMatchesLost: undefined,
+      mu: undefined,
+      sigma: undefined,
+      ranking: undefined,
+      accent: (req.query.accent as string) || undefined,
+      logo: (req.query.logo as string) || undefined,
+      primary: (req.query.primary as string) || undefined,
+      screen: (req.query.screen as string) || undefined,
+      secondary: (req.query.secondary as string) || undefined,
+    });
+    res.json({ message: "Team Created", team_id: team.id });
   } catch (error) {
     next(error);
   }
@@ -103,11 +169,22 @@ app.put(
   "/teams/:id",
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      await db.updateTeam(req.params.id, {
-        id: req.params.id as string,
-        name: req.query.name as string,
+      const team = await db.upsertTeam({
+        id: (req.params.id as string) || undefined,
+        name: (req.query.name as string) || undefined,
+        totalEqMatches: undefined,
+        totalEqMatchesWon: undefined,
+        totalEqMatchesLost: undefined,
+        mu: undefined,
+        sigma: undefined,
+        ranking: undefined,
+        accent: (req.query.accent as string) || undefined,
+        logo: (req.query.logo as string) || undefined,
+        primary: (req.query.primary as string) || undefined,
+        screen: (req.query.screen as string) || undefined,
+        secondary: (req.query.secondary as string) || undefined,
       });
-      res.json({ message: "Team Updated" });
+      res.json({ message: "Team Updated", team_id: team.id });
     } catch (error) {
       next(error);
     }
@@ -131,12 +208,12 @@ app.delete(
 app.get("/players", async (req: Request, res: Response, next: NextFunction) => {
   try {
     const epic_id = req.query.epic_id as string;
-    const discord_id = req.query.discord_id as string;
+    const name = req.query.name as string;
     if (epic_id) {
       const player = await db.getUserByEpicId(epic_id);
       res.json(player);
-    } else if (discord_id) {
-      const player = await db.getUserByDiscordId(discord_id);
+    } else if (name) {
+      const player = await db.getUserByName(name);
       res.json(player);
     } else {
       const players = await db.getAllUsers();
@@ -164,14 +241,17 @@ app.post(
   "/players",
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      await db.createUser({
+      const user = await db.upsertUser({
         id: uuidv4(),
-        name: req.query.name as string,
-        epic_id: req.query.epic_id as string,
-        discord_id: req.query.discord_id as string,
-        team_id: req.query.team_id as string,
+        name: (req.query.name as string) || undefined,
+        epic_id: (req.query.epic_id as string) || undefined,
+        discord_id: (req.query.discord_id as string) || undefined,
+        team_id: (req.query.team_id as string) || undefined,
+        email: (req.query.email as string) || undefined,
+        image: (req.query.image as string) || undefined,
+        emailVerified: undefined,
       });
-      res.json({ message: "Player Created" });
+      res.json({ message: "Player Created", user_id: user.id });
     } catch (error) {
       next(error);
     }
@@ -182,14 +262,17 @@ app.put(
   "/players/:id",
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      await db.updateUser(req.params.id, {
-        id: req.params.id as string,
-        name: req.query.name as string,
-        epic_id: req.query.epic_id as string,
-        discord_id: req.query.discord_id as string,
-        team_id: req.query.team_id as string,
+      const user = await db.upsertUser({
+        id: (req.params.id as string) || undefined,
+        name: (req.query.name as string) || undefined,
+        epic_id: (req.query.epic_id as string) || undefined,
+        discord_id: (req.query.discord_id as string) || undefined,
+        team_id: (req.query.team_id as string) || undefined,
+        email: (req.query.email as string) || undefined,
+        image: (req.query.image as string) || undefined,
+        emailVerified: undefined,
       });
-      res.json({ message: "Player Updated" });
+      res.json({ message: "Player Updated", user_id: user.id });
     } catch (error) {
       next(error);
     }
@@ -208,21 +291,15 @@ app.delete(
   }
 );
 
+// ------------------------- EquationMatch Routes -------------------------
+
 // //Matches Routes
 // Can also get matches by team_id /matches?team_id={team_id} or team_name /matches?team_name={team_name} or by model_id /matches?model_id={model_id}
 app.get("/matches", async (req: Request, res: Response, next: NextFunction) => {
   try {
     const team_id = req.query.team_id as string;
-    const team_name = req.query.team_name as string;
-    const model_id = req.query.model_id as string;
     if (team_id) {
-      const matches = await db.getMatchesByTeamID(team_id);
-      res.json(matches);
-    } else if (team_name) {
-      const matches = await db.getMatchesByTeamName(team_name);
-      res.json(matches);
-    } else if (model_id) {
-      const matches = await db.getMatchesByModelID(model_id);
+      const matches = await db.getEquationMatchesByTeamId(team_id);
       res.json(matches);
     } else {
       const matches = await db.getAllMatches();
@@ -238,7 +315,7 @@ app.get(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const id = req.params.id;
-      const match = await db.getMatchById(id);
+      const match = await db.getEquationMatchById(id);
       res.json(match);
     } catch (error) {
       next(error);
@@ -249,21 +326,19 @@ app.get(
 app.post(
   "/matches",
   async (req: Request, res: Response, next: NextFunction) => {
+    // Cast to MatchStatus "PENDING" | "PLANNED" | "STARTED" | "INPROGRESS" | "FINISHED" | "CANCELLED"
+    const status = (req.query.status as MatchStatus) || undefined;
+    const id = uuidv4();
     try {
-      await db.createMatch({
-        id: uuidv4(),
-        team_1: req.query.team_1_id as string,
-        team_2: req.query.team_2_id as string,
-        team_1_model: req.query.team_1_model_id as string,
-        team_2_model: req.query.team_2_model_id as string,
-        team_1_score: parseInt(req.query.team_1_score as string),
-        team_2_score: parseInt(req.query.team_2_score as string),
-        timestamp: new Date(req.query.timestamp as string),
+      const match = await db.upsertEquationMatch({
+        id: id,
         type: req.query.type as string,
-        winning_team_id: req.query.winning_team_id as string,
-        winning_model_id: req.query.winning_model_id as string,
+        status: status,
+        started: new Date(req.query.started as string) || undefined, // Provide a value for started
+        ended: new Date(req.query.started as string) || undefined,
+        planned_start: new Date(req.query.started as string) || undefined,
       });
-      res.json({ message: "Match Created" });
+      res.json({ message: "Match Created", id: match.id });
     } catch (error) {
       next(error);
     }
@@ -273,21 +348,17 @@ app.post(
 app.put(
   "/matches/:id",
   async (req: Request, res: Response, next: NextFunction) => {
+    const status = (req.query.status as MatchStatus) || undefined; // Cast to MatchStatus
     try {
-      await db.updateMatch(req.params.id, {
-        id: req.params.id as string,
-        team_1: req.query.team_1_id as string,
-        team_2: req.query.team_2_id as string,
-        team_1_model: req.query.team_1_model_id as string,
-        team_2_model: req.query.team_2_model_id as string,
-        team_1_score: parseInt(req.query.team_1_score as string),
-        team_2_score: parseInt(req.query.team_2_score as string),
-        timestamp: new Date(req.query.timestamp as string),
+      const eqMatch = await db.upsertEquationMatch({
+        id: req.params.id,
         type: req.query.type as string,
-        winning_team_id: req.query.winning_team_id as string,
-        winning_model_id: req.query.winning_model_id as string,
+        status: status,
+        started: new Date(req.query.started as string) || undefined, // Provide a value for started
+        ended: new Date(req.query.started as string) || undefined,
+        planned_start: new Date(req.query.started as string) || undefined,
       });
-      res.json({ message: "Match Updated" });
+      res.json({ message: "Match Updated", id: eqMatch.id });
     } catch (error) {
       next(error);
     }
@@ -298,7 +369,7 @@ app.delete(
   "/matches/:id",
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      await db.deleteMatch(req.params.id);
+      await db.deleteEquationMatch(req.params.id);
       res.json({ message: "Match Deleted" });
     } catch (error) {
       next(error);
@@ -306,88 +377,120 @@ app.delete(
   }
 );
 
-// //Models Routes
-
-app.get("/models", async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const team_name = req.query.team_name as string;
-    const team_id = req.query.team_id as string;
-    if (team_name) {
-      const models = await db.getModelsByTeamName(team_name);
-      res.json(models);
-    } else if (team_id) {
-      const models = await db.getModelsByTeamID(team_id);
-      res.json(models);
-    } else {
-      const models = await db.getAllModels();
-      res.json({ models });
+app.post(
+  "/matches/addTeam/:id",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const id = await db.addTeamToEquationMatch(
+        req.params.id as string,
+        req.params.equationId as string,
+        req.query.teamId as string,
+        parseInt(req.query.score as string),
+        Boolean(req.query.winner as string)
+      );
+      res.json({ message: "Team Added to Match", id: id });
+    } catch (error) {
+      next(error);
     }
-  } catch (error) {
-    next(error);
   }
-});
+);
+
+app.post(
+  "/matches/finishMatch/:id",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      db.updateEquationMatchTeamMuSigma(req.params.id);
+      res.json({
+        message: "Successfully finished match and calculations",
+        id: req.params.id,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+// ------------------------- Equation Routes -------------------------
 
 app.get(
-  "/models/:id",
+  "/equations",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const team_id = req.query.team_id as string;
+      const user_id = req.query.user_id as string;
+      if (team_id) {
+        const equations = await db.getEquationsByTeamId(team_id);
+        res.json({ equations });
+      } else if (user_id) {
+        const equations = await db.getEquationByUserId(user_id);
+        res.json({ equations });
+      } else {
+        const equations = await db.getAllEquations();
+        res.json({ equations });
+      }
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+app.get(
+  "/equations/:id",
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const id = req.params.id;
-      const model = await db.getModelById(id);
-      res.json(model);
+      const equation = await db.getEquationById(id);
+      res.json(equation);
     } catch (error) {
       next(error);
     }
   }
 );
 
-app.post("/models", async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    await db.createModel({
-      id: uuidv4(),
-      name: req.query.name as string,
-      team_id: req.query.team_id as string,
-      url: req.query.url as string,
-    });
-    res.json({ message: "Model Created" });
-  } catch (error) {
-    next(error);
+app.post(
+  "/equations",
+  async (req: Request, res: Response, next: NextFunction) => {
+    console.log(req.query.name as string);
+    console.log(req.query.name);
+    //console.log(req.body.);
+
+    console.log("found elo_contribute to be undefined");
+    try {
+      const eq = await db.upsertEquation({
+        id: uuidv4(),
+        name: (req.query.name as string) || undefined,
+        team_id: (req.query.team_id as string) || undefined,
+        user_id: (req.query.user_id as string) || undefined,
+        elo_contribute:
+          parseInt(req.query.elo_contribute as string) || undefined,
+        content: req.query.content || undefined,
+      });
+      res.json({ message: "Equation Created", id: eq.id });
+    } catch (error) {
+      next(error);
+    }
   }
-});
+);
 
 app.put(
-  "/models/:id",
+  "/equations/:id",
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      await db.updateModel(req.params.id, {
-        id: req.params.id as string,
-        name: req.query.name as string,
-        team_id: req.query.team_id as string,
-        url: req.query.url as string,
+      const eq = await db.upsertEquation({
+        id: (req.params.id as string) || undefined,
+        name: (req.query.name as string) || undefined,
+        team_id: (req.query.team_id as string) || undefined,
+        user_id: (req.query.user_id as string) || undefined,
+        elo_contribute:
+          parseInt(req.query.elo_contribute as string) || undefined,
+        content: req.query.content || undefined,
       });
-      res.json({ message: "Model Updated" });
+      res.json({ message: "Equation Updated", equationId: eq.id });
     } catch (error) {
       next(error);
     }
   }
 );
-
-app.delete(
-  "/models/:id",
-  async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      await db.deleteModel(req.params.id);
-      res.json({ message: "Model Deleted" });
-    } catch (error) {
-      next(error);
-    }
-  }
-);
-
-app.get("/testDocker", async (req: Request, res: Response) => {
-  dock.testFunc();
-
-  res.send({ message: "Hello World!" });
-});
 
 // start server
 app.listen(port, () => {

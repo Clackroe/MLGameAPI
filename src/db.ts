@@ -1,132 +1,118 @@
-import { PrismaClient, match, model, user, team } from "@prisma/client";
+import {
+  PrismaClient,
+  Team,
+  User,
+  /*TrainedMatch,*/ EquationMatch,
+  Equation,
+  /*Model,*/ Job /*VerificationToken*/,
+  TeamInEquationMatch,
+} from "@prisma/client";
 // import e from "express";
+import * as rank from "./ranking";
 
 const prisma = new PrismaClient();
 
+// -------------------------------- EQUATION MATCH --------------------------------
 // Function to create a match
-export async function createMatch(data: match) {
+export async function upsertEquationMatch(data: EquationMatch) {
   try {
-    const match = await prisma.match.create({ data });
-    return match;
+    const eqmatch = await prisma.equationMatch.upsert({
+      where: { id: data.id },
+      create: {
+        type: data.type || undefined,
+        status: data.status || undefined,
+
+        started: data.started || undefined,
+        ended: data.ended || undefined,
+        planned_start: data.planned_start || undefined,
+      },
+      update: data,
+    });
+    return eqmatch;
   } catch (error) {
     console.error("Error creating match:", error);
-    throw new Error("Failed to create match.");
+    throw new Error("Failed to upsert match.");
   }
 }
 
 // Function to get a match by ID
-export async function getMatchById(matchId: string) {
+export async function getEquationMatchById(matchId: string) {
   try {
-    const match = await prisma.match.findUnique({
+    const eqmatch = await prisma.equationMatch.findUnique({
       where: { id: matchId },
       include: {
-        team1: true,
-        team2: true,
-        modelAsTeam1: true,
-        modelAsTeam2: true,
-        winningModel: true,
-        winningTeam: true,
+        TeamInEquationMatch: true,
       },
     });
-    return match;
+    return eqmatch;
   } catch (error) {
     console.error("Error retrieving match:", error);
     throw new Error("Failed to retrieve match.");
   }
 }
 
-// Function to update a match
-export async function updateMatch(matchId: string, data: match) {
+// Obselete by upsert, Function to update a match
+/*
+export async function updateEquationMatch(matchId: string, data: EquationMatch) {
   try {
-    const match = await prisma.match.update({
+    const eqmatch = await prisma.equationMatch.update({
       where: { id: matchId },
       data,
     });
-    return match;
+    return eqmatch;
   } catch (error) {
     console.error("Error updating match:", error);
     throw new Error("Failed to update match.");
   }
-}
+} */
 
 // Function to delete a match
-export async function deleteMatch(matchId: string) {
+export async function deleteEquationMatch(matchId: string) {
   try {
-    const match = await prisma.match.delete({
+    const eqmatch = await prisma.equationMatch.delete({
       where: { id: matchId },
     });
-    return match;
+    return eqmatch;
   } catch (error) {
     console.error("Error deleting match:", error);
     throw new Error("Failed to delete match.");
   }
 }
 
-// Function to create a model
-export async function createModel(data: model) {
-  try {
-    const model = await prisma.model.create({ data });
-    return model;
-  } catch (error) {
-    console.error("Error creating model:", error);
-    throw new Error("Failed to create model.");
-  }
-}
+//-------------------------------- TEAM --------------------------------
 
-// Function to get a model by ID
-export async function getModelById(modelId: string) {
+// Function to upsert a team
+export async function upsertTeam(data: Team) {
   try {
-    const model = await prisma.model.findUnique({
-      where: { id: modelId },
-      include: {
-        team: true,
-        matchesAsTeam1: true,
-        matchesAsTeam2: true,
-        matchesAsWinningModel: true,
+    const team = await prisma.team.upsert({
+      where: { id: data.id },
+      create: {
+        name: data.name,
+        totalEqMatches: data.totalEqMatches || 0,
+        totalEqMatchesWon: data.totalEqMatchesWon || 0,
+        totalEqMatchesLost: data.totalEqMatchesLost || 0,
+        accent: data.accent || undefined,
+        logo: data.logo || undefined,
+        primary: data.primary || undefined,
+        secondary: data.secondary || undefined,
+        screen: data.screen || undefined,
+      },
+      update: {
+        name: data.name || undefined,
+        totalEqMatches: data.totalEqMatches || undefined,
+        totalEqMatchesWon: data.totalEqMatchesWon || undefined,
+        totalEqMatchesLost: data.totalEqMatchesLost || undefined,
+        accent: data.accent || undefined,
+        logo: data.logo || undefined,
+        primary: data.primary || undefined,
+        secondary: data.secondary || undefined,
+        screen: data.screen || undefined,
       },
     });
-    return model;
-  } catch (error) {
-    console.error("Error retrieving model:", error);
-    throw new Error("Failed to retrieve model.");
-  }
-}
-
-// Function to update a model
-export async function updateModel(modelId: string, data: model) {
-  try {
-    const model = await prisma.model.update({
-      where: { id: modelId },
-      data,
-    });
-    return model;
-  } catch (error) {
-    console.error("Error updating model:", error);
-    throw new Error("Failed to update model.");
-  }
-}
-
-// Function to delete a model
-export async function deleteModel(modelId: string) {
-  try {
-    const model = await prisma.model.delete({
-      where: { id: modelId },
-    });
-    return model;
-  } catch (error) {
-    console.error("Error deleting model:", error);
-    throw new Error("Failed to delete model.");
-  }
-}
-
-// Function to create a team
-export async function createTeam(data: team) {
-  try {
-    const team = await prisma.team.create({ data });
     return team;
   } catch (error) {
     console.error("Error creating team:", error);
-    throw new Error("Failed to create team.");
+    throw new Error("Failed to upsert team.");
   }
 }
 
@@ -136,11 +122,10 @@ export async function getTeamById(teamId: string) {
     const team = await prisma.team.findUnique({
       where: { id: teamId },
       include: {
-        users: true,
-        models: true,
-        matchesAsTeam1: true,
-        matchesAsTeam2: true,
-        matchesAsWinningModel: true,
+        Equation: true,
+        Job: true,
+        User: true,
+        TeamInEquationMatch: true,
       },
     });
     return team;
@@ -150,8 +135,8 @@ export async function getTeamById(teamId: string) {
   }
 }
 
-// Function to update a team
-export async function updateTeam(teamId: string, data: team) {
+// Obsolete by upsert, Function to update a team
+/*export async function updateTeam(teamId: string, data: Team) {
   try {
     const team = await prisma.team.update({
       where: { id: teamId },
@@ -162,7 +147,7 @@ export async function updateTeam(teamId: string, data: team) {
     console.error("Error updating team:", error);
     throw new Error("Failed to update team.");
   }
-}
+}*/
 
 // Function to delete a team
 export async function deleteTeam(teamId: string) {
@@ -177,14 +162,34 @@ export async function deleteTeam(teamId: string) {
   }
 }
 
-// Function to create a user
-export async function createUser(data: user) {
+//-------------------------------- USER --------------------------------
+
+// Function to upsert a user
+export async function upsertUser(data: User) {
   try {
-    const user = await prisma.user.create({ data });
+    const user = await prisma.user.upsert({
+      where: { id: data.id },
+      create: {
+        name: data.name || undefined,
+        email: data.email || undefined,
+        epic_id: data.epic_id || undefined,
+        discord_id: data.discord_id || undefined,
+        team_id: data.team_id || undefined,
+        image: data.image || undefined,
+      },
+      update: {
+        name: data.name || undefined,
+        email: data.email || undefined,
+        epic_id: data.epic_id || undefined,
+        discord_id: data.discord_id || undefined,
+        team_id: data.team_id || undefined,
+        image: data.image || undefined,
+      },
+    });
     return user;
   } catch (error) {
     console.error("Error creating user:", error);
-    throw new Error("Failed to create user.");
+    throw new Error("Failed to upsert user.");
   }
 }
 
@@ -194,7 +199,10 @@ export async function getUserById(userId: string) {
     const user = await prisma.user.findUnique({
       where: { id: userId },
       include: {
-        team: true,
+        Account: true,
+        Equation: true,
+        Session: true,
+        Team: true,
       },
     });
     return user;
@@ -204,8 +212,8 @@ export async function getUserById(userId: string) {
   }
 }
 
-// Function to update a user
-export async function updateUser(userId: string, data: user) {
+// Obsolete by upsert, Function to update a user
+/*export async function updateUser(userId: string, data: user) {
   try {
     const user = await prisma.user.update({
       where: { id: userId },
@@ -216,7 +224,7 @@ export async function updateUser(userId: string, data: user) {
     console.error("Error updating user:", error);
     throw new Error("Failed to update user.");
   }
-}
+}*/
 
 // Function to delete a user
 export async function deleteUser(userId: string) {
@@ -231,21 +239,177 @@ export async function deleteUser(userId: string) {
   }
 }
 
+// -------------------------------- EQUATION --------------------------------
+// Function to create an equation
+export async function upsertEquation(data: Equation) {
+  try {
+    console.log(data);
+    const eq = await prisma.equation.upsert({
+      where: { id: data.id },
+      create: {
+        name: data.name || undefined,
+        user_id: data.user_id || undefined,
+        team_id: data.team_id || undefined,
+        elo_contribute: data.elo_contribute || undefined,
+        content: data.content || undefined,
+      },
+      update: {
+        name: data.name || undefined,
+        team_id: data.team_id || undefined,
+        user_id: data.user_id || undefined,
+        elo_contribute: data.elo_contribute || undefined,
+        content: data.content || undefined,
+      },
+    });
+    return eq;
+  } catch (error) {
+    console.error("Error upserting equation:", error);
+    throw new Error("Failed to upsert equation.");
+  }
+}
+
+// Function to get all equations
+
+export async function getAllEquations() {
+  try {
+    const eqs = await prisma.equation.findMany({
+      include: {
+        Team: true,
+        User: true,
+      },
+    });
+    return eqs;
+  } catch (error) {
+    console.error("Error retrieving equations:", error);
+    throw new Error("Failed to retrieve equations.");
+  }
+}
+
+// Function to get all equations by a team
+
+export async function getEquationsByTeamId(teamId: string) {
+  try {
+    const eqs = await prisma.equation.findMany({
+      where: { team_id: teamId },
+      include: {
+        Team: true,
+        User: true,
+      },
+    });
+    return eqs;
+  } catch (error) {
+    console.error("Error retrieving equations:", error);
+    throw new Error("Failed to retrieve equations.");
+  }
+}
+
+// Function to get all equations by a user
+export async function getEquationByUserId(userId: string) {
+  try {
+    const eqs = await prisma.equation.findMany({
+      where: { user_id: userId },
+      include: {
+        Team: true,
+        User: true,
+      },
+    });
+    return eqs;
+  } catch (error) {
+    console.error("Error retrieving equations:", error);
+    throw new Error("Failed to retrieve equations.");
+  }
+}
+
+// Function to get a equaiton by ID
+export async function getEquationById(eqId: string) {
+  try {
+    const eq = await prisma.equation.findUnique({
+      where: { id: eqId },
+      include: {
+        Team: true,
+        User: true,
+      },
+    });
+    return eq;
+  } catch (error) {
+    console.error("Error retrieving equation:", error);
+    throw new Error("Failed to retrieve equation.");
+  }
+}
+
+// Function to delete an equation
+export async function deleteEquation(eqId: string) {
+  try {
+    const eq = await prisma.equationMatch.delete({
+      where: { id: eqId },
+    });
+    return eq;
+  } catch (error) {
+    console.error("Error deleting equation:", error);
+    throw new Error("Failed to delete equation.");
+  }
+}
+
+// -------------------------------- JOB --------------------------------
+// Function to upsert a job
+export async function upsertJob(data: Job) {
+  try {
+    const job = await prisma.job.upsert({
+      where: { id: data.id },
+      create: data,
+      update: data,
+    });
+    return job;
+  } catch (error) {
+    console.error("Error upserting job:", error);
+    throw new Error("Failed to upsert job.");
+  }
+}
+
+// Function to get a job by ID
+export async function getJobById(jobId: string) {
+  try {
+    const job = await prisma.job.findUnique({
+      where: { id: jobId },
+      include: {
+        Team: true,
+      },
+    });
+    return job;
+  } catch (error) {
+    console.error("Error retrieving job:", error);
+    throw new Error("Failed to retrieve job.");
+  }
+}
+
+// Function to delete a job
+export async function deleteJob(jobId: string) {
+  try {
+    const job = await prisma.job.delete({
+      where: { id: jobId },
+    });
+    return job;
+  } catch (error) {
+    console.error("Error deleting job:", error);
+    throw new Error("Failed to delete job.");
+  }
+}
+
+//
 export async function getAllTeams() {
   try {
     const teams = await prisma.team.findMany({
       include: {
-        users: true,
-        models: true,
-        matchesAsTeam1: true,
-        matchesAsTeam2: true,
-        matchesAsWinningModel: true,
+        Equation: true,
+        Job: true,
+        User: true,
+        TeamInEquationMatch: true,
       },
     });
     return teams;
   } catch (error) {
-    console.error("Error retrieving teams:", error);
-    throw new Error("Failed to retrieve teams.");
+    console.error("Error retrieving all teams:", error);
+    throw new Error("Failed to retrieve all teams.");
   }
 }
 
@@ -253,7 +417,8 @@ export async function getAllUsers() {
   try {
     const users = await prisma.user.findMany({
       include: {
-        team: true,
+        Equation: true,
+        Team: true,
       },
     });
     return users;
@@ -263,33 +428,11 @@ export async function getAllUsers() {
   }
 }
 
-export async function getAllModels() {
-  try {
-    const models = await prisma.model.findMany({
-      include: {
-        team: true,
-        matchesAsTeam1: true,
-        matchesAsTeam2: true,
-        matchesAsWinningModel: true,
-      },
-    });
-    return models;
-  } catch (error) {
-    console.error("Error retrieving models:", error);
-    throw new Error("Failed to retrieve models.");
-  }
-}
-
 export async function getAllMatches() {
   try {
-    const matches = await prisma.match.findMany({
+    const matches = await prisma.equationMatch.findMany({
       include: {
-        team1: true,
-        team2: true,
-        modelAsTeam1: true,
-        modelAsTeam2: true,
-        winningModel: true,
-        winningTeam: true,
+        TeamInEquationMatch: true,
       },
     });
     return matches;
@@ -304,11 +447,7 @@ export async function getTeamByName(name: string) {
     const team = await prisma.team.findUnique({
       where: { name: name },
       include: {
-        users: true,
-        models: true,
-        matchesAsTeam1: true,
-        matchesAsTeam2: true,
-        matchesAsWinningModel: true,
+        User: true,
       },
     });
     return team;
@@ -325,7 +464,8 @@ export async function getUsersByTeamID(id: string) {
         team_id: id,
       },
       include: {
-        team: true,
+        Team: true,
+        Equation: true,
       },
     });
 
@@ -336,68 +476,6 @@ export async function getUsersByTeamID(id: string) {
   }
 }
 
-export async function getModelsByTeamID(id: string) {
-  try {
-    const models = await prisma.model.findMany({
-      where: {
-        team_id: id,
-      },
-      include: {
-        team: true,
-        matchesAsTeam1: true,
-        matchesAsTeam2: true,
-        matchesAsWinningModel: true,
-      },
-    });
-
-    return models;
-  } catch (error) {
-    console.error("Error getting models", error);
-    throw new Error("Failed to get models from team");
-  }
-}
-
-export async function getMatchesByTeamID(id: string) {
-  try {
-    const matches = await prisma.match.findMany({
-      where: {
-        team_1: id,
-      },
-      include: {
-        team1: true,
-        team2: true,
-        modelAsTeam1: true,
-        modelAsTeam2: true,
-        winningModel: true,
-        winningTeam: true,
-      },
-    });
-
-    return matches;
-  } catch (error) {
-    console.error("Error getting matches", error);
-    throw new Error("Failed to get matches from team");
-  }
-}
-
-export async function getUserByDiscordId(id: string) {
-  try {
-    const user = await prisma.user.findUnique({
-      where: {
-        discord_id: id,
-      },
-      include: {
-        team: true,
-      },
-    });
-
-    return user;
-  } catch (error) {
-    console.error("Error getting user", error);
-    throw new Error("Failed to get user from discord id");
-  }
-}
-
 export async function getUserByEpicId(id: string) {
   try {
     const user = await prisma.user.findUnique({
@@ -405,7 +483,8 @@ export async function getUserByEpicId(id: string) {
         epic_id: id,
       },
       include: {
-        team: true,
+        Team: true,
+        Equation: true,
       },
     });
 
@@ -416,42 +495,34 @@ export async function getUserByEpicId(id: string) {
   }
 }
 
-export async function getMatchesByModelID(id: string) {
+export async function getUserByName(id: string) {
   try {
-    const matches = await prisma.match.findMany({
+    const user = await prisma.user.findUnique({
       where: {
-        OR: [{ team_1_model: id }, { team_2_model: id }],
+        name: id,
       },
       include: {
-        team1: true,
-        team2: true,
-        modelAsTeam1: true,
-        modelAsTeam2: true,
-        winningModel: true,
-        winningTeam: true,
+        Team: true,
+        Equation: true,
       },
     });
 
-    return matches;
+    return user;
   } catch (error) {
-    console.error("Error getting matches", error);
-    throw new Error("Failed to get matches from model");
+    console.error("Error getting user", error);
+    throw new Error("Failed to get user from epic id");
   }
 }
 
-export async function getMatchesByTeamName(id: string) {
+export async function getEquationMatchesByTeamId(id: string) {
   try {
-    const matches = await prisma.match.findMany({
-      where: {
-        OR: [{ team_1: id }, { team_2: id }],
-      },
+    const matches = await prisma.equationMatch.findMany({
       include: {
-        team1: true,
-        team2: true,
-        modelAsTeam1: true,
-        modelAsTeam2: true,
-        winningModel: true,
-        winningTeam: true,
+        TeamInEquationMatch: {
+          where: {
+            teamId: id,
+          },
+        },
       },
     });
 
@@ -462,39 +533,181 @@ export async function getMatchesByTeamName(id: string) {
   }
 }
 
-export async function getModelsByTeamName(name: string) {
+// -------------------------------- TeamInEquationMatch --------------------------------
+
+export async function getTeamInEquationMatchesByMatchID(id: string) {
   try {
-    const models = await prisma.model.findMany({
+    const teamInEquationMatch = await prisma.teamInEquationMatch.findMany({
       where: {
-        team: {
-          name: name,
-        },
+        equationMatchId: id,
       },
       include: {
-        team: true,
-        matchesAsTeam1: true,
-        matchesAsTeam2: true,
-        matchesAsWinningModel: true,
+        Equation: true,
+        Team: true,
+        EquationMatch: true,
       },
     });
 
-    return models;
+    return teamInEquationMatch;
   } catch (error) {
-    console.error("Error getting models", error);
-    throw new Error("Failed to get models from team");
+    console.error("Error getting TeamInEquationMatch");
   }
 }
 
+export async function upsertTeamInEquationmatch(data: TeamInEquationMatch) {
+  try {
+    const team = await prisma.team.findUnique({
+      where: {
+        id: data.teamId,
+      },
+    });
+
+    const teamInEquationMatch = await prisma.teamInEquationMatch.upsert({
+      where: { id: data.id },
+      create: {
+        ...data,
+        mu_before: team.mu,
+        sigma_before: team.sigma,
+      },
+      update: data,
+    });
+    return teamInEquationMatch;
+  } catch (error) {
+    console.error("Error upserting TeamInEquationMatch:", error);
+    throw new Error("Failed to upsert TeamInEquationMatch.");
+  }
+}
+
+export async function deleteTeamInEquationMatch(id: string) {
+  try {
+    const teamInEquationMatch = await prisma.teamInEquationMatch.delete({
+      where: { id: id },
+    });
+    return teamInEquationMatch;
+  } catch (error) {
+    console.error("Error deleting TeamInEquationMatch:", error);
+    throw new Error("Failed to delete TeamInEquationMatch.");
+  }
+}
+
+export async function updateEquationMatchTeamMuSigma(eqMatchID: string) {
+  try {
+    const match = await prisma.equationMatch.findUnique({
+      where: {
+        id: eqMatchID,
+      },
+      include: {
+        TeamInEquationMatch: true,
+      },
+    });
+
+    const teams = match.TeamInEquationMatch.map((team: TeamInEquationMatch) => {
+      return {
+        sigma_before: team.sigma_before.toNumber(),
+        // sigma_after: team.sigma_after.toNumber() || undefined,
+        mu_before: team.mu_before.toNumber(),
+        score: team.score,
+        teamId: team.teamId,
+        matchId: team.equationMatchId,
+        teamInEquationMatchID: team.id,
+      };
+    });
+
+    const scores = rank.calculateRankings(teams);
+
+    for (const score of scores) {
+      await prisma.team.update({
+        where: {
+          id: score.teamId,
+        },
+        data: {
+          mu: score.mu_after,
+          sigma: score.sigma_after,
+          ranking: score.ranking,
+        },
+      });
+      await prisma.teamInEquationMatch.update({
+        where: {
+          id: score.teamInEquationMatchID,
+        },
+        data: {
+          mu_after: score.mu_after,
+          sigma_after: score.sigma_after,
+          ranking_after: score.ranking,
+        },
+      });
+    }
+    await prisma.equationMatch.update({
+      where: {
+        id: eqMatchID,
+      },
+      data: {
+        ended: new Date(),
+        status: "FINISHED",
+      },
+    });
+  } catch (error) {
+    console.error("Error updating EquationMatch Team Mu Sigma:", error);
+    throw new Error("Failed to update EquationMatch Team Mu Sigma.");
+  }
+}
+
+export async function addTeamToEquationMatch(
+  matchID: string,
+  equationID: string,
+  teamID: string,
+  score: number,
+  winner: boolean
+) {
+  try {
+    const team = await prisma.team.findUnique({
+      where: {
+        id: teamID,
+      },
+    });
+    const match = await prisma.teamInEquationMatch.create({
+      data: {
+        equationMatchId: matchID,
+        equationID: equationID,
+        teamId: teamID,
+        mu_before: team.mu,
+        sigma_before: team.sigma,
+        score: score,
+        winner: winner,
+      },
+    });
+    return match.equationMatchId;
+  } catch (error) {
+    console.error("Error adding team", error);
+    throw new Error("Failed to add team to the match...");
+  }
+}
+
+// -------------------------------- Verification Token --------------------------------
+
+// Function to get a verification token by ID
 export async function validateToken(token: string) {
   try {
-    const tokenOut = await prisma.token.findUnique({
+    const tokenOut = await prisma.apiToken.findUnique({
       where: {
         id: token,
       },
     });
-
     return { token: tokenOut, valid: true };
   } catch (error) {
     return { token: null, valid: false };
+  }
+}
+
+// Function to delete a Verification Token
+export async function deleteVerificationToken(apiTokenId: string) {
+  try {
+    const apiToken = await prisma.apiToken.delete({
+      where: { id: apiTokenId },
+    });
+    return apiToken;
+  } catch (error) {
+    console.error("Error deleting job:", error);
+    throw new Error("Failed to delete job.");
   }
 }

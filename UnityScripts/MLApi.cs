@@ -3,12 +3,15 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
 using System;
+using UnityEngine.UIElements.Experimental;
+using JetBrains.Annotations;
+using UnityEditor.TestTools.CodeCoverage;
 
 public class MLApi : MonoBehaviour
 {
     // Start is called before the first frame update    
 
-
+    //change to localhost:3000, or have xander upload or something lmao
     private const string URL = "https://test-api.test.com";
 
 
@@ -60,7 +63,7 @@ public class MLApi : MonoBehaviour
         }));
     }
 
-    public void GetUserByDiscordID(string discord_id, Action<Player> callback)
+    public void GetUserByNameUsingDiscordId(string discord_id, Action<Player> callback)
     {
         StartCoroutine(GetRequest($"{PLAYERS_ENDPOINT}?discord_id={discord_id}", (string response) =>
         {
@@ -96,119 +99,105 @@ public class MLApi : MonoBehaviour
         }));
     }
 
-    public void GetModelByID(string id, Action<Model> callback)
-    {
-        StartCoroutine(GetRequest($"{MODELS_ENDPOINT}/{id}", (string response) =>
+    /*   -----NOT USING MODELS RN -----
+        public void GetModelByID(string id, Action<Model> callback)
         {
-            Model model = JsonUtility.FromJson<Model>(response);
-            callback.Invoke(model);
-        }));
-    }
-
-    public void GetModelsByTeamName(string name, Action<ArrayList> callback)
-    {
-        StartCoroutine(GetRequest($"{MODELS_ENDPOINT}?team_name={name}", (string response) =>
-        {
-            ArrayList models = new();
-            ModelResponse modelResponse = JsonUtility.FromJson<ModelResponse>(response);
-
-            foreach (Model model in modelResponse.models)
+            StartCoroutine(GetRequest($"{MODELS_ENDPOINT}/{id}", (string response) =>
             {
-                models.Add(model);
-            }
-            callback.Invoke(models);
+                Model model = JsonUtility.FromJson<Model>(response);
+                callback.Invoke(model);
+            }));
+        }
 
-        }));
-    }
-
-    public void GetModelsByTeamID(string id, Action<ArrayList> callback)
-    {
-        StartCoroutine(GetRequest($"{MODELS_ENDPOINT}?team_id={id}", (string response) =>
+        public void GetModelsByTeamName(string name, Action<ArrayList> callback)
         {
-            ArrayList models = new();
-            ModelResponse modelResponse = JsonUtility.FromJson<ModelResponse>(response);
-
-            foreach (Model model in modelResponse.models)
+            StartCoroutine(GetRequest($"{MODELS_ENDPOINT}?team_name={name}", (string response) =>
             {
-                models.Add(model);
-            }
-            callback.Invoke(models);
+                ArrayList models = new();
+                ModelResponse modelResponse = JsonUtility.FromJson<ModelResponse>(response);
 
-        }));
-    }
+                foreach (Model model in modelResponse.models)
+                {
+                    models.Add(model);
+                }
+                callback.Invoke(models);
 
-    public void GetAllModels(Action<ArrayList> callback)
-    {
-        StartCoroutine(GetRequest($"{MODELS_ENDPOINT}", (string response) =>
+            }));
+        }
+
+        public void GetModelsByTeamID(string id, Action<ArrayList> callback)
         {
-            ArrayList models = new();
-            ModelResponse modelResponse = JsonUtility.FromJson<ModelResponse>(response);
-
-            foreach (Model model in modelResponse.models)
+            StartCoroutine(GetRequest($"{MODELS_ENDPOINT}?team_id={id}", (string response) =>
             {
-                models.Add(model);
-            }
-            callback.Invoke(models);
+                ArrayList models = new();
+                ModelResponse modelResponse = JsonUtility.FromJson<ModelResponse>(response);
 
-        }));
-    }
+                foreach (Model model in modelResponse.models)
+                {
+                    models.Add(model);
+                }
+                callback.Invoke(models);
 
-    public void GetMatchByID(string id, Action<Match> callback)
+            }));
+        }
+
+        public void GetAllModels(Action<ArrayList> callback)
+        {
+            StartCoroutine(GetRequest($"{MODELS_ENDPOINT}", (string response) =>
+            {
+                ArrayList models = new();
+                ModelResponse modelResponse = JsonUtility.FromJson<ModelResponse>(response);
+
+                foreach (Model model in modelResponse.models)
+                {
+                    models.Add(model);
+                }
+                callback.Invoke(models);
+
+            }));
+        } */
+
+    public void GetEquationMatchByID(string id, Action<EquationMatch> callback)
     {
         StartCoroutine(GetRequest($"{MATCHES_ENDPOINT}/{id}", (string response) =>
         {
-            Match match = JsonUtility.FromJson<Match>(response);
-            callback.Invoke(match);
+            EquationMatch eqMatch = JsonUtility.FromJson<EquationMatch>(response);
+            callback.Invoke(eqMatch);
         }));
     }
 
-    public void GetMatchByTeamID(string id, Action<ArrayList> callback)
+    public void GetEquationMatchByTeamID(string id, Action<ArrayList> callback)
     {
         StartCoroutine(GetRequest($"{MATCHES_ENDPOINT}?team_id={id}", (string response) =>
         {
-            ArrayList matches = new();
+            ArrayList eqMatches = new();
             MatchResponse matchResponse = JsonUtility.FromJson<MatchResponse>(response);
 
-            foreach (Match match in matchResponse.matches)
+            foreach (EquationMatch eqMatch in matchResponse.matches)
             {
-                matches.Add(match);
+                eqMatches.Add(eqMatch);
             }
-            callback.Invoke(matches);
+            callback.Invoke(eqMatches);
 
         }));
     }
 
-    public void GetMatchByTeamName(string name, Action<ArrayList> callback)
+    public void GetMatchByTeamId(string id, Action<ArrayList> callback)
     {
-        StartCoroutine(GetRequest($"{MATCHES_ENDPOINT}?team_name={name}", (string response) =>
+        StartCoroutine(GetRequest($"{MATCHES_ENDPOINT}?team_name={id}", (string response) =>
         {
-            ArrayList matches = new();
+            ArrayList eqMatches = new();
             MatchResponse matchResponse = JsonUtility.FromJson<MatchResponse>(response);
 
-            foreach (Match match in matchResponse.matches)
+            foreach (EquationMatch eqMatch in matchResponse.matches)
             {
-                matches.Add(match);
+                eqMatches.Add(eqMatch);
             }
-            callback.Invoke(matches);
+            callback.Invoke(eqMatches);
 
         }));
     }
 
-    public void GetMatchesByModelID(string id, Action<ArrayList> callback)
-    {
-        StartCoroutine(GetRequest($"{MATCHES_ENDPOINT}?model_id={id}", (string response) =>
-        {
-            ArrayList matches = new();
-            MatchResponse matchResponse = JsonUtility.FromJson<MatchResponse>(response);
-
-            foreach (Match match in matchResponse.matches)
-            {
-                matches.Add(match);
-            }
-            callback.Invoke(matches);
-
-        }));
-    }
 
     public void GetAllMatches(Action<ArrayList> callback)
     {
@@ -217,7 +206,7 @@ public class MLApi : MonoBehaviour
             ArrayList matches = new();
             MatchResponse matchResponse = JsonUtility.FromJson<MatchResponse>(response);
 
-            foreach (Match match in matchResponse.matches)
+            foreach (EquationMatch match in matchResponse.matches)
             {
                 matches.Add(match);
             }
@@ -247,10 +236,7 @@ public class MLApi : MonoBehaviour
     }
 
     //Post requests
-    public void CreateTeam(string name)
-    {
-        StartCoroutine(PostRequest($"{TEAMS_ENDPOINT}", $"name={name}"));
-    }
+    /*
 
     public void CreateUser(string discord_id, string epic_id, string team_id, string name)
     {
@@ -264,11 +250,19 @@ public class MLApi : MonoBehaviour
     public void CreateMatch(string team_1, string team_1_model, string team_2, string team_2_model, string type, string timestamp, string team_1_score, string team_2_score, string winning_team_id, string winning_model_id)
     {
         StartCoroutine(PostRequest($"{MATCHES_ENDPOINT}", $"team_1={team_1}&team_1_model={team_1_model}&team_2={team_2}&team_2_model={team_2_model}&type={type}&timestamp={timestamp}&team_1_score={team_1_score}&team_2_score={team_2_score}&winning_team_id={winning_team_id}&winning_model_id={winning_model_id}"));
-    }
+    }*/
+
     //Put requests
-    public void UpdateTeam(string id, string name)
+    public void UpsertTeam(string id, string name)
     {
-        StartCoroutine(PutRequest($"{TEAMS_ENDPOINT}/{id}", $"name={name}"));
+        if (id is null)
+        {
+            StartCoroutine(PostRequest($"{TEAMS_ENDPOINT}", $"name={name}"));
+        } else
+        {
+            StartCoroutine(PutRequest($"{TEAMS_ENDPOINT}/{id}", $"name={name}"));
+        }
+
     }
 
     public void UpdateUser(string id, string discord_id, string epic_id, string team_id, string name)
@@ -373,11 +367,43 @@ public class Team
 {
     public string id;
     public string name;
-    public Player[] users;
-    public Model[] models;
-    public Match[] matchesAsTeam1;
-    public Match[] matchesAsTeam2;
-    public Match[] matchesAsWinningModel;
+    public int eq_elo;
+    public int trained_elo;
+    public Equation[] equations;
+    public Job[] jobs;
+    public User[] users;
+    public TeamInEquationMatch[] teamInEquationMatches;
+
+}
+
+[System.Serializable]
+public class Equation
+{
+    public string id;
+    public string name;
+    public string user_id;
+    public string team_id;
+    public int elo_contribute;
+    public string content;
+}
+
+[System.Serializable]
+public class Job
+{
+    //TODO
+}
+
+[System.Serializable]
+public class User
+{
+    //TODO
+    public string id;
+    public string name;
+    public string epic_id;
+    public string email;
+    public string image;
+    public bool emailVerified;
+    public String discord_id;
 
 }
 
@@ -399,12 +425,17 @@ public class PlayerResponse
 public class Player
 {
     public string id;
-    public string discord_id;
-    public string epic_id;
-    public string team_id;
     public string name;
-    public SmallTeam team;
+    public string epic_id;
+    public string email;
+    public string image;
+    public string team_id;
+    public bool emailVerified;
+    public string discord_id;
+    public Equation[] equations;
+    public Team team;
 }
+
 
 [System.Serializable]
 public class ModelResponse
@@ -426,22 +457,26 @@ public class Model
 
 public class MatchResponse
 {
-    public Match[] matches;
+    public EquationMatch[] matches;
 }
 
 [System.Serializable]
 
-public class Match
+public class EquationMatch
 {
     public string id;
-    public string team_1;
-    public string team_1_model;
-    public string team_2;
-    public string team_2_model;
     public string type;
     public string timestamp;
-    public string team_1_score;
-    public string team_2_score;
-    public string winning_team_id;
-    public string winning_model_id;
+    public TeamInEquationMatch[] TeamInEquationMatch;
 }
+
+[System.Serializable]
+public class TeamInEquationMatch
+{
+    public string equationMatchId;
+    public string team_id;
+    public string score;
+    public string equation_id;
+    public bool winner;
+}
+
