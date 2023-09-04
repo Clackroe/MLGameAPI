@@ -1,6 +1,6 @@
 import { rating, rate, ordinal } from "openskill";
 
-type teamMatchRating = {
+export type teamMatchRating = {
   sigma_before: number;
   sigma_after?: number;
   mu_before: number;
