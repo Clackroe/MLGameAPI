@@ -80,36 +80,51 @@ model Team {
   totalEqMatches      Int                   @default(0)
   totalEqMatchesWon   Int                   @default(0)
   totalEqMatchesLost  Int                   @default(0)
-  mu                  Decimal?              @default(25) @db.Decimal
-  sigma               Decimal?              @default(8.3333333333) @db.Decimal
-  ranking             Decimal?              @db.Decimal
+  district_mu         Decimal?              @default(25) @db.Decimal
+  district_sigma      Decimal?              @default(8.3333333333) @db.Decimal
+  global_mu           Decimal?              @default(25) @db.Decimal
+  global_sigma        Decimal?              @default(8.3333333333) @db.Decimal
+  global_ranking      Decimal?              @db.Decimal
+  district_ranking    Decimal?              @db.Decimal
   accent              String?               @default("#40ba0b") @db.VarChar(255)
   logo                String?               @db.VarChar(255)
   primary             String?               @default("#a69977") @db.VarChar(255)
   screen              String?               @default("#ffffff") @db.VarChar(255)
   secondary           String?               @default("#292826") @db.VarChar(255)
+  districtId          String?               @db.Uuid
   Equation            Equation[]
   Job                 Job[]
+  District            District?             @relation(fields: [districtId], references: [id])
   TeamEqEloHistory    TeamEqEloHistory[]
   TeamInEquationMatch TeamInEquationMatch[]
   User                User[]
 }
 
 model TeamInEquationMatch {
-  equationMatchId String        @db.Uuid
-  teamId          String        @db.Uuid
-  score           Int?          @default(0)
-  equationID      String        @db.Uuid
-  winner          Boolean?      @default(false)
-  id              String        @id @unique @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  mu_after        Decimal?      @db.Decimal
-  sigma_after     Decimal?      @db.Decimal
-  mu_before       Decimal?      @db.Decimal
-  sigma_before    Decimal?      @db.Decimal
-  ranking_after   Decimal?      @db.Decimal
-  Equation        Equation      @relation(fields: [equationID], references: [id])
-  EquationMatch   EquationMatch @relation(fields: [equationMatchId], references: [id])
-  Team            Team          @relation(fields: [teamId], references: [id])
+  equationMatchId String   @db.Uuid
+  teamId          String   @db.Uuid
+  score           Int?     @default(0)
+  equationID      String   @db.Uuid
+  winner          Boolean? @default(false)
+  id              String   @id @unique @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  district_mu_after      Decimal? @db.Decimal
+  district_sigma_after   Decimal? @db.Decimal
+  district_mu_before     Decimal? @db.Decimal
+  district_sigma_before  Decimal? @db.Decimal
+  district_ranking_after Decimal? @db.Decimal
+
+  global_mu_after      Decimal? @db.Decimal
+  global_sigma_after   Decimal? @db.Decimal
+  global_mu_before     Decimal? @db.Decimal
+  global_sigma_before  Decimal? @db.Decimal
+  global_ranking_after Decimal? @db.Decimal
+
+  districtId String? @db.Uuid
+
+  Equation      Equation      @relation(fields: [equationID], references: [id])
+  EquationMatch EquationMatch @relation(fields: [equationMatchId], references: [id])
+  Team          Team          @relation(fields: [teamId], references: [id])
 }
 
 model User {
@@ -141,6 +156,13 @@ model TeamEqEloHistory {
   elo       Int
   timestamp DateTime @db.Timestamp(6)
   Team      Team     @relation(fields: [teamId], references: [id], onUpdate: Restrict)
+}
+
+model District {
+  id   String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name String  @unique
+  logo String?
+  Team Team[]
 }
 
 enum ApiAccess {

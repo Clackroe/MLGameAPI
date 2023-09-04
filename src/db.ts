@@ -9,6 +9,7 @@ import {
 } from "@prisma/client";
 // import e from "express";
 import * as rank from "./ranking";
+import { teamMatchRating } from "./ranking";
 
 const prisma = new PrismaClient();
 
@@ -96,6 +97,7 @@ export async function upsertTeam(data: Team) {
         primary: data.primary || undefined,
         secondary: data.secondary || undefined,
         screen: data.screen || undefined,
+        districtId: data.districtId || undefined,
       },
       update: {
         name: data.name || undefined,
@@ -107,6 +109,7 @@ export async function upsertTeam(data: Team) {
         primary: data.primary || undefined,
         secondary: data.secondary || undefined,
         screen: data.screen || undefined,
+        districtId: data.districtId || undefined,
       },
     });
     return team;
@@ -126,6 +129,7 @@ export async function getTeamById(teamId: string) {
         Job: true,
         User: true,
         TeamInEquationMatch: true,
+        District: true,
       },
     });
     return team;
@@ -404,6 +408,28 @@ export async function getAllTeams() {
         Job: true,
         User: true,
         TeamInEquationMatch: true,
+        District: true,
+      },
+    });
+    return teams;
+  } catch (error) {
+    console.error("Error retrieving all teams:", error);
+    throw new Error("Failed to retrieve all teams.");
+  }
+}
+
+export async function getAllTeamsByDistrict(district_id: string) {
+  try {
+    const teams = await prisma.team.findMany({
+      where: {
+        districtId: district_id,
+      },
+      include: {
+        Equation: true,
+        Job: true,
+        User: true,
+        TeamInEquationMatch: true,
+        District: true,
       },
     });
     return teams;
@@ -448,6 +474,7 @@ export async function getTeamByName(name: string) {
       where: { name: name },
       include: {
         User: true,
+        District: true,
       },
     });
     return team;
@@ -529,6 +556,7 @@ export async function getEquationMatchesByTeamId(id: string) {
     return matches;
   } catch (error) {
     console.error("Error getting matches", error);
+    upsertTeam;
     throw new Error("Failed to get matches from team");
   }
 }
@@ -566,8 +594,8 @@ export async function upsertTeamInEquationmatch(data: TeamInEquationMatch) {
       where: { id: data.id },
       create: {
         ...data,
-        mu_before: team.mu,
-        sigma_before: team.sigma,
+        global_mu_before: team.global_mu,
+        global_sigma_before: team.global_sigma,
       },
       update: data,
     });
@@ -592,51 +620,10 @@ export async function deleteTeamInEquationMatch(id: string) {
 
 export async function updateEquationMatchTeamMuSigma(eqMatchID: string) {
   try {
-    const match = await prisma.equationMatch.findUnique({
-      where: {
-        id: eqMatchID,
-      },
-      include: {
-        TeamInEquationMatch: true,
-      },
-    });
+    const ratings = await getTeamMatchRatings(eqMatchID);
 
-    const teams = match.TeamInEquationMatch.map((team: TeamInEquationMatch) => {
-      return {
-        sigma_before: team.sigma_before.toNumber(),
-        // sigma_after: team.sigma_after.toNumber() || undefined,
-        mu_before: team.mu_before.toNumber(),
-        score: team.score,
-        teamId: team.teamId,
-        matchId: team.equationMatchId,
-        teamInEquationMatchID: team.id,
-      };
-    });
+    await updateScores(ratings);
 
-    const scores = rank.calculateRankings(teams);
-
-    for (const score of scores) {
-      await prisma.team.update({
-        where: {
-          id: score.teamId,
-        },
-        data: {
-          mu: score.mu_after,
-          sigma: score.sigma_after,
-          ranking: score.ranking,
-        },
-      });
-      await prisma.teamInEquationMatch.update({
-        where: {
-          id: score.teamInEquationMatchID,
-        },
-        data: {
-          mu_after: score.mu_after,
-          sigma_after: score.sigma_after,
-          ranking_after: score.ranking,
-        },
-      });
-    }
     await prisma.equationMatch.update({
       where: {
         id: eqMatchID,
@@ -670,8 +657,13 @@ export async function addTeamToEquationMatch(
         equationMatchId: matchID,
         equationID: equationID,
         teamId: teamID,
-        mu_before: team.mu,
-        sigma_before: team.sigma,
+        district_mu_before: team.district_mu,
+        district_sigma_before: team.district_sigma,
+        global_mu_before: team.global_mu,
+        global_sigma_before: team.global_sigma,
+
+        districtId: team.districtId,
+
         score: score,
         winner: winner,
       },
@@ -709,5 +701,167 @@ export async function deleteVerificationToken(apiTokenId: string) {
   } catch (error) {
     console.error("Error deleting job:", error);
     throw new Error("Failed to delete job.");
+  }
+}
+
+//----District---
+
+// -------------------------------- Team Match Rating --------------------------------
+
+type TeamMatchData = {
+  global_sigma_before: number;
+  global_mu_before: number;
+  district_sigma_before: number;
+  district_mu_before: number;
+  districtId: string;
+  score: number;
+  teamId: string;
+  matchId: string;
+  equationMatchId: string;
+  teamInEquationMatchID: string;
+};
+
+async function getTeamMatchRatings(
+  eqMatchID: string
+): Promise<{ Global: teamMatchRating[]; District?: teamMatchRating[] }> {
+  try {
+    const match = await prisma.equationMatch.findUnique({
+      where: {
+        id: eqMatchID,
+      },
+      include: {
+        TeamInEquationMatch: true,
+      },
+    });
+
+    const teamsAll: TeamMatchData[] = match.TeamInEquationMatch.map(
+      (team: TeamInEquationMatch) => {
+        return {
+          global_sigma_before: team.global_sigma_before.toNumber(),
+          global_mu_before: team.global_mu_before.toNumber(),
+
+          district_sigma_before: team.district_sigma_before.toNumber(),
+          district_mu_before: team.district_mu_before.toNumber(),
+
+          districtId: team.districtId,
+
+          score: team.score,
+          teamId: team.teamId,
+          matchId: team.equationMatchId,
+          equationMatchId: team.equationMatchId,
+          teamInEquationMatchID: team.id,
+        };
+      }
+    );
+
+    let returnData: {
+      Global: teamMatchRating[];
+      District?: teamMatchRating[];
+    } = {
+      Global: [],
+    };
+
+    const teamsGlobal: teamMatchRating[] = teamsAll.map(
+      (team: TeamMatchData) => {
+        return {
+          sigma_before: team.global_sigma_before,
+          mu_before: team.global_mu_before,
+          score: team.score,
+          teamId: team.teamId,
+          matchId: team.equationMatchId,
+          teamInEquationMatchID: team.teamInEquationMatchID,
+        };
+      }
+    );
+    returnData = { Global: teamsGlobal };
+
+    if (areSameDistrict(teamsAll)) {
+      //update Global and District
+      const teamsDistrict: teamMatchRating[] = teamsAll.map(
+        (team: TeamMatchData) => {
+          return {
+            sigma_before: team.district_sigma_before,
+            mu_before: team.district_mu_before,
+            score: team.score,
+            teamId: team.teamId,
+            matchId: team.equationMatchId,
+            teamInEquationMatchID: team.teamInEquationMatchID,
+          };
+        }
+      );
+      returnData = { Global: returnData.Global, District: teamsDistrict };
+      // returnData(teamsDistrict);
+    }
+
+    return returnData;
+
+    //---
+  } catch (error) {
+    console.error("Error updating EquationMatch Team Mu Sigma:", error);
+    throw new Error("Failed to update EquationMatch Team Mu Sigma.");
+  }
+}
+
+function areSameDistrict(teams: TeamMatchData[]) {
+  const districtIds = teams.map((team) => team.districtId);
+  return districtIds.every((val, i, arr) => val === arr[0]);
+}
+
+async function updateScores(ratings: {
+  Global: teamMatchRating[];
+  District?: teamMatchRating[];
+}) {
+  const global_ratings = rank.calculateRankings(ratings.Global);
+
+  const district_ratings = ratings.District
+    ? rank.calculateRankings(ratings.District)
+    : null;
+
+  global_ratings.map(async (team) => {
+    await prisma.team.update({
+      where: {
+        id: team.teamId,
+      },
+      data: {
+        global_mu: team.mu_after,
+        global_sigma: team.sigma_after,
+        global_ranking: team.ranking,
+      },
+    });
+    await prisma.teamInEquationMatch.update({
+      where: {
+        id: team.teamInEquationMatchID,
+      },
+      data: {
+        global_mu_after: team.mu_after,
+        global_sigma_after: team.sigma_after,
+        global_ranking_after: team.ranking,
+      },
+    });
+  });
+
+  if (district_ratings != null) {
+    district_ratings.map(async (team) => {
+      await prisma.team.update({
+        where: {
+          id: team.teamId,
+        },
+        data: {
+          district_mu: team.mu_after,
+          district_sigma: team.sigma_after,
+          district_ranking: team.ranking,
+        },
+      });
+      await prisma.teamInEquationMatch.update({
+        where: {
+          id: team.teamInEquationMatchID,
+        },
+        data: {
+          district_mu_after: team.mu_after,
+          district_sigma_after: team.sigma_after,
+          district_ranking_after: team.ranking,
+        },
+      });
+    });
   }
 }
