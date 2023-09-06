@@ -9,9 +9,26 @@ import { MatchStatus } from "@prisma/client";
 
 import rateLimit from "express-rate-limit";
 
+import cors from "cors";
+
+const allowedOrigins = [
+  "https://dev-robo.vesl.gg",
+  "https://another-domain.com", // Add additional origins here
+];
+
+//CORS stuff
+const corsOptions = {
+  origin: allowedOrigins,
+  methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+  credentials: true,
+  optionsSuccessStatus: 204,
+};
+
 import * as db from "./db";
 
 //-------------------------------Middleware-------------------------------
+
+app.use(cors(corsOptions));
 
 //Authorize Access
 async function accessHandler(req: Request, res: Response, next: NextFunction) {

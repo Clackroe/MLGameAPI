@@ -754,13 +754,6 @@ async function getTeamMatchRatings(
       }
     );
 
-    let returnData: {
-      Global: teamMatchRating[];
-      District?: teamMatchRating[];
-    } = {
-      Global: [],
-    };
-
     const teamsGlobal: teamMatchRating[] = teamsAll.map(
       (team: TeamMatchData) => {
         return {
@@ -773,7 +766,6 @@ async function getTeamMatchRatings(
         };
       }
     );
-    returnData = { Global: teamsGlobal };
 
     if (areSameDistrict(teamsAll)) {
       //update Global and District
@@ -789,11 +781,11 @@ async function getTeamMatchRatings(
           };
         }
       );
-      returnData = { Global: returnData.Global, District: teamsDistrict };
+      return { Global: teamsGlobal, District: teamsDistrict };
       // returnData(teamsDistrict);
+    } else {
+      return { Global: teamsGlobal };
     }
-
-    return returnData;
 
     //---
   } catch (error) {
@@ -802,9 +794,10 @@ async function getTeamMatchRatings(
   }
 }
 
-function areSameDistrict(teams: TeamMatchData[]) {
+function areSameDistrict(teams: TeamMatchData[]): boolean {
   const districtIds = teams.map((team) => team.districtId);
-  return districtIds.every((val, i, arr) => val === arr[0]);
+  const uniqueDistrictIds = [...new Set(districtIds)];
+  return uniqueDistrictIds.length === 1;
 }
 
 async function updateScores(ratings: {
