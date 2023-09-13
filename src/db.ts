@@ -180,6 +180,7 @@ export async function upsertUser(data: User) {
         discord_id: data.discord_id || undefined,
         team_id: data.team_id || undefined,
         image: data.image || undefined,
+        perm_id: data.perm_id || undefined,
       },
       update: {
         name: data.name || undefined,
@@ -188,6 +189,7 @@ export async function upsertUser(data: User) {
         discord_id: data.discord_id || undefined,
         team_id: data.team_id || undefined,
         image: data.image || undefined,
+        perm_id: data.perm_id || undefined,
       },
     });
     return user;
