@@ -27,11 +27,24 @@ const teamImages = [
 export async function main() {
   //add Teams
 
-  const NUM_TEAMS = 200;
-  const NUM_USERS = 1200;
+  const NUM_DIST = 2;
 
-  const NUM_EQUATIONS = 4800;
-  const NUM_MATCHES = 12000;
+  const NUM_TEAMS = 20;
+  const NUM_USERS = 40;
+
+  const NUM_EQUATIONS = 80;
+  const NUM_MATCHES = 100;
+
+  //add Districts
+  for (let i = 0; i < NUM_DIST; i++) {
+    await prisma.district.create({
+      data: {
+        name: `${randAirportName()}-${i}`,
+      },
+    });
+  }
+
+  const dist = await prisma.district.findMany();
 
   for (let i = 0; i < NUM_TEAMS; i++) {
     await prisma.team.create({
@@ -42,6 +55,7 @@ export async function main() {
         secondary: randHex(),
         screen: randHex(),
         accent: randHex(),
+        districtId: dist[i % NUM_DIST].id,
       },
     });
   }
@@ -68,7 +82,7 @@ export async function main() {
         name: `${randAirportName()}-${i}`,
         user_id: users[i % NUM_USERS].id,
         team_id: teams[i % NUM_TEAMS].id,
-        content: "x^2 + y^2 = z^2",
+        content: "x-y",
       },
     });
   }
@@ -98,8 +112,8 @@ export async function main() {
     const eq1 =
       team1.Equation[Math.floor(Math.random() * team1.Equation.length)];
     const team1Score =
-      parseInt(String(team1.mu)) +
-      3 * parseInt(String(team1.sigma)) +
+      parseInt(String(team1.global_mu)) +
+      3 * parseInt(String(team1.global_sigma)) +
       Math.random() * (5 - -5) +
       -5;
 
@@ -111,8 +125,8 @@ export async function main() {
     const eq2 =
       team2.Equation[Math.floor(Math.random() * team2.Equation.length)];
     const team2Score =
-      parseInt(String(team2.mu)) +
-      3 * parseInt(String(team2.sigma)) +
+      parseInt(String(team2.global_mu)) +
+      3 * parseInt(String(team2.global_sigma)) +
       Math.random() * (5 - -5) +
       -5;
 
@@ -121,8 +135,10 @@ export async function main() {
         equationMatchId: eqMatch.id,
         equationID: eq1.id,
         teamId: team1.id,
-        mu_before: team1.mu,
-        sigma_before: team1.sigma,
+        global_mu_before: team1.global_mu,
+        global_sigma_before: team1.global_sigma,
+        district_mu_before: team1.district_mu,
+        district_sigma_before: team1.district_sigma,
         score: team1Score,
         winner: team1Score > team2Score,
       },
@@ -132,8 +148,10 @@ export async function main() {
         equationMatchId: eqMatch.id,
         equationID: eq2.id,
         teamId: team2.id,
-        mu_before: team2.mu,
-        sigma_before: team2.sigma,
+        global_mu_before: team2.global_mu,
+        global_sigma_before: team2.global_sigma,
+        district_mu_before: team2.district_mu,
+        district_sigma_before: team2.district_sigma,
         score: team2Score,
         winner: team2Score > team1Score,
       },

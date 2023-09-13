@@ -9,9 +9,26 @@ import { MatchStatus } from "@prisma/client";
 
 import rateLimit from "express-rate-limit";
 
+import cors from "cors";
+
+const allowedOrigins = [
+  "https://dev-robo.vesl.gg",
+  "https://another-domain.com", // Add additional origins here
+];
+
+//CORS stuff
+const corsOptions = {
+  origin: allowedOrigins,
+  methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+  credentials: true,
+  optionsSuccessStatus: 204,
+};
+
 import * as db from "./db";
 
 //-------------------------------Middleware-------------------------------
+
+app.use(cors(corsOptions));
 
 //Authorize Access
 async function accessHandler(req: Request, res: Response, next: NextFunction) {
@@ -115,10 +132,15 @@ app.get("/teams", async (req: Request, res: Response, next: NextFunction) => {
   try {
     //get teams by name /teams?name={name}
     const name = req.query.name as string;
+    const district = req.query.district_id as string;
     if (name) {
       const team = await db.getTeamByName(name);
 
       res.json(team);
+    } else if (district) {
+      const teams = await db.getAllTeamsByDistrict(district);
+
+      res.json(teams);
     } else {
       const teams = await db.getAllTeams();
 
@@ -150,14 +172,18 @@ app.post("/teams", async (req: Request, res: Response, next: NextFunction) => {
       totalEqMatches: undefined,
       totalEqMatchesWon: undefined,
       totalEqMatchesLost: undefined,
-      mu: undefined,
-      sigma: undefined,
-      ranking: undefined,
+      global_mu: undefined,
+      global_sigma: undefined,
+      global_ranking: undefined,
+      district_mu: undefined,
+      district_sigma: undefined,
+      district_ranking: undefined,
       accent: (req.query.accent as string) || undefined,
       logo: (req.query.logo as string) || undefined,
       primary: (req.query.primary as string) || undefined,
       screen: (req.query.screen as string) || undefined,
       secondary: (req.query.secondary as string) || undefined,
+      districtId: (req.query.districtId as string) || undefined,
     });
     res.json({ message: "Team Created", team_id: team.id });
   } catch (error) {
@@ -175,14 +201,18 @@ app.put(
         totalEqMatches: undefined,
         totalEqMatchesWon: undefined,
         totalEqMatchesLost: undefined,
-        mu: undefined,
-        sigma: undefined,
-        ranking: undefined,
+        global_mu: undefined,
+        global_sigma: undefined,
+        global_ranking: undefined,
+        district_mu: undefined,
+        district_sigma: undefined,
+        district_ranking: undefined,
         accent: (req.query.accent as string) || undefined,
         logo: (req.query.logo as string) || undefined,
         primary: (req.query.primary as string) || undefined,
         screen: (req.query.screen as string) || undefined,
         secondary: (req.query.secondary as string) || undefined,
+        districtId: (req.query.districtId as string) || undefined,
       });
       res.json({ message: "Team Updated", team_id: team.id });
     } catch (error) {
@@ -250,6 +280,7 @@ app.post(
         email: (req.query.email as string) || undefined,
         image: (req.query.image as string) || undefined,
         emailVerified: undefined,
+        perm_id: (req.query.perm_id as string) || undefined,
       });
       res.json({ message: "Player Created", user_id: user.id });
     } catch (error) {
@@ -271,6 +302,7 @@ app.put(
         email: (req.query.email as string) || undefined,
         image: (req.query.image as string) || undefined,
         emailVerified: undefined,
+        perm_id: (req.query.perm_id as string) || undefined,
       });
       res.json({ message: "Player Updated", user_id: user.id });
     } catch (error) {
@@ -386,6 +418,7 @@ app.post(
         req.params.equationId as string,
         req.query.teamId as string,
         parseInt(req.query.score as string),
+
         Boolean(req.query.winner as string)
       );
       res.json({ message: "Team Added to Match", id: id });
@@ -491,6 +524,25 @@ app.put(
     }
   }
 );
+
+//-----------------------------District Routes-----------------------------
+
+// //add district
+// app.post(
+//   "/districts",
+//   async (req: Request, res: Response, next: NextFunction) => {
+//     try {
+//       const district = await db.upsertDistrict({
+//         id: uuidv4(),
+//         name: (req.query.name as string) || undefined,
+//         logo: (req.query.logo as string) || undefined,
+//       });
+//       res.json({ message: "District Created", district_id: district.id });
+//     } catch (error) {
+//       next(error);
+//     }
+//   }
+// );
 
 // start server
 app.listen(port, () => {
