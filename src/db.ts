@@ -209,6 +209,7 @@ export async function getUserById(userId: string) {
         Equation: true,
         Session: true,
         Team: true,
+        Perms: true,
       },
     });
     return user;
@@ -447,6 +448,7 @@ export async function getAllUsers() {
       include: {
         Equation: true,
         Team: true,
+        Perms: true,
       },
     });
     return users;
@@ -495,6 +497,7 @@ export async function getUsersByTeamID(id: string) {
       include: {
         Team: true,
         Equation: true,
+        Perms: true,
       },
     });
 
@@ -514,6 +517,7 @@ export async function getUserByEpicId(id: string) {
       include: {
         Team: true,
         Equation: true,
+        Perms: true,
       },
     });
 
@@ -533,6 +537,7 @@ export async function getUserByName(id: string) {
       include: {
         Team: true,
         Equation: true,
+        Perms: true,
       },
     });
 
