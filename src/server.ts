@@ -13,7 +13,8 @@ import cors from "cors";
 
 const allowedOrigins = [
   "https://dev-robo.vesl.gg",
-  "https://another-domain.com", // Add additional origins here
+  "https://api.vesl.gg",
+  "https://robo.vesl.gg", // Add additional origins here
 ];
 
 //CORS stuff
@@ -280,6 +281,7 @@ app.post(
         email: (req.query.email as string) || undefined,
         image: (req.query.image as string) || undefined,
         emailVerified: undefined,
+        perm_id: (req.query.perm_id as string) || undefined,
       });
       res.json({ message: "Player Created", user_id: user.id });
     } catch (error) {
@@ -301,6 +303,7 @@ app.put(
         email: (req.query.email as string) || undefined,
         image: (req.query.image as string) || undefined,
         emailVerified: undefined,
+        perm_id: (req.query.perm_id as string) || undefined,
       });
       res.json({ message: "Player Updated", user_id: user.id });
     } catch (error) {
@@ -517,6 +520,18 @@ app.put(
         content: req.query.content || undefined,
       });
       res.json({ message: "Equation Updated", equationId: eq.id });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+app.delete(
+  "/equations/:id",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      await db.deleteEquation(req.params.id);
+      res.json({ message: "Equation Deleted" });
     } catch (error) {
       next(error);
     }

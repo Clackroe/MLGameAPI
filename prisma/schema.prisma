@@ -80,18 +80,18 @@ model Team {
   totalEqMatches      Int                   @default(0)
   totalEqMatchesWon   Int                   @default(0)
   totalEqMatchesLost  Int                   @default(0)
-  district_mu         Decimal?              @default(25) @db.Decimal
-  district_sigma      Decimal?              @default(8.3333333333) @db.Decimal
-  global_mu           Decimal?              @default(25) @db.Decimal
-  global_sigma        Decimal?              @default(8.3333333333) @db.Decimal
-  global_ranking      Decimal?              @db.Decimal
-  district_ranking    Decimal?              @db.Decimal
   accent              String?               @default("#40ba0b") @db.VarChar(255)
   logo                String?               @db.VarChar(255)
   primary             String?               @default("#a69977") @db.VarChar(255)
   screen              String?               @default("#ffffff") @db.VarChar(255)
   secondary           String?               @default("#292826") @db.VarChar(255)
   districtId          String?               @db.Uuid
+  district_mu         Decimal?              @default(25) @db.Decimal
+  district_sigma      Decimal?              @default(8.3333333333) @db.Decimal
+  global_mu           Decimal?              @default(25) @db.Decimal
+  global_sigma        Decimal?              @default(8.3333333333) @db.Decimal
+  district_ranking    Decimal?              @db.Decimal
+  global_ranking      Decimal?              @db.Decimal
   Equation            Equation[]
   Job                 Job[]
   District            District?             @relation(fields: [districtId], references: [id])
@@ -101,30 +101,26 @@ model Team {
 }
 
 model TeamInEquationMatch {
-  equationMatchId String   @db.Uuid
-  teamId          String   @db.Uuid
-  score           Int?     @default(0)
-  equationID      String   @db.Uuid
-  winner          Boolean? @default(false)
-  id              String   @id @unique @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-
-  district_mu_after      Decimal? @db.Decimal
-  district_sigma_after   Decimal? @db.Decimal
-  district_mu_before     Decimal? @db.Decimal
-  district_sigma_before  Decimal? @db.Decimal
-  district_ranking_after Decimal? @db.Decimal
-
-  global_mu_after      Decimal? @db.Decimal
-  global_sigma_after   Decimal? @db.Decimal
-  global_mu_before     Decimal? @db.Decimal
-  global_sigma_before  Decimal? @db.Decimal
-  global_ranking_after Decimal? @db.Decimal
-
-  districtId String? @db.Uuid
-
-  Equation      Equation      @relation(fields: [equationID], references: [id])
-  EquationMatch EquationMatch @relation(fields: [equationMatchId], references: [id])
-  Team          Team          @relation(fields: [teamId], references: [id])
+  equationMatchId        String        @db.Uuid
+  teamId                 String        @db.Uuid
+  score                  Int?          @default(0)
+  equationID             String        @db.Uuid
+  winner                 Boolean?      @default(false)
+  id                     String        @id @unique @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  district_mu_after      Decimal?      @db.Decimal
+  district_mu_before     Decimal?      @db.Decimal
+  district_ranking_after Decimal?      @db.Decimal
+  district_sigma_after   Decimal?      @db.Decimal
+  district_sigma_before  Decimal?      @db.Decimal
+  global_mu_after        Decimal?      @db.Decimal
+  global_mu_before       Decimal?      @db.Decimal
+  global_ranking_after   Decimal?      @db.Decimal
+  global_sigma_after     Decimal?      @db.Decimal
+  global_sigma_before    Decimal?      @db.Decimal
+  districtId             String?       @db.Uuid
+  Equation               Equation      @relation(fields: [equationID], references: [id])
+  EquationMatch          EquationMatch @relation(fields: [equationMatchId], references: [id])
+  Team                   Team          @relation(fields: [teamId], references: [id])
 }
 
 model User {
@@ -136,9 +132,11 @@ model User {
   team_id       String?    @db.Uuid
   emailVerified DateTime?
   discord_id    String     @default(dbgenerated("('@'::text || (name)::text)")) @db.VarChar(255)
+  perm_id       String?    @db.Uuid
   Account       Account[]
   Equation      Equation[]
   Session       Session[]
+  Perms         Perms?     @relation(fields: [perm_id], references: [id], onDelete: Restrict, onUpdate: Restrict)
   Team          Team?      @relation(fields: [team_id], references: [id], onDelete: Restrict, onUpdate: Restrict)
 }
 
@@ -163,6 +161,21 @@ model District {
   name String  @unique
   logo String?
   Team Team[]
+}
+
+model Perms {
+  id              String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name            String  @default("Custom")
+  is_admin        Boolean @default(false)
+  admin_dash      Boolean @default(false)
+  create_team     Boolean @default(false)
+  edit_team       Boolean @default(false)
+  delete_team     Boolean @default(false)
+  create_user     Boolean @default(false)
+  delete_user     Boolean @default(false)
+  edit_user       Boolean @default(false)
+  delete_equation Boolean @default(false)
+  User            User[]
 }
 
 enum ApiAccess {

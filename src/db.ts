@@ -17,12 +17,12 @@ const prisma = new PrismaClient();
 // Function to create a match
 export async function upsertEquationMatch(data: EquationMatch) {
   try {
+    console.log(`Date provided: ${data.started}`);
     const eqmatch = await prisma.equationMatch.upsert({
       where: { id: data.id },
       create: {
         type: data.type || undefined,
         status: data.status || undefined,
-
         started: data.started || undefined,
         ended: data.ended || undefined,
         planned_start: data.planned_start || undefined,
@@ -180,6 +180,7 @@ export async function upsertUser(data: User) {
         discord_id: data.discord_id || undefined,
         team_id: data.team_id || undefined,
         image: data.image || undefined,
+        perm_id: data.perm_id || undefined,
       },
       update: {
         name: data.name || undefined,
@@ -188,6 +189,7 @@ export async function upsertUser(data: User) {
         discord_id: data.discord_id || undefined,
         team_id: data.team_id || undefined,
         image: data.image || undefined,
+        perm_id: data.perm_id || undefined,
       },
     });
     return user;
@@ -207,6 +209,7 @@ export async function getUserById(userId: string) {
         Equation: true,
         Session: true,
         Team: true,
+        Perms: true,
       },
     });
     return user;
@@ -445,6 +448,7 @@ export async function getAllUsers() {
       include: {
         Equation: true,
         Team: true,
+        Perms: true,
       },
     });
     return users;
@@ -493,6 +497,7 @@ export async function getUsersByTeamID(id: string) {
       include: {
         Team: true,
         Equation: true,
+        Perms: true,
       },
     });
 
@@ -512,6 +517,7 @@ export async function getUserByEpicId(id: string) {
       include: {
         Team: true,
         Equation: true,
+        Perms: true,
       },
     });
 
@@ -531,6 +537,7 @@ export async function getUserByName(id: string) {
       include: {
         Team: true,
         Equation: true,
+        Perms: true,
       },
     });
 
