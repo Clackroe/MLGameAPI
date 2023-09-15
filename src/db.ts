@@ -17,12 +17,12 @@ const prisma = new PrismaClient();
 // Function to create a match
 export async function upsertEquationMatch(data: EquationMatch) {
   try {
+    console.log(`Date provided: ${data.started}`);
     const eqmatch = await prisma.equationMatch.upsert({
       where: { id: data.id },
       create: {
         type: data.type || undefined,
         status: data.status || undefined,
-
         started: data.started || undefined,
         ended: data.ended || undefined,
         planned_start: data.planned_start || undefined,
