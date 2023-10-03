@@ -3,7 +3,7 @@ import { NextFunction, Request, Response } from "express";
 import express from "express";
 import { v4 as uuidv4 } from "uuid";
 const app = express();
-const port = 3001; // default port to listen
+const port = 3000; // default port to listen
 
 import { MatchStatus } from "@prisma/client";
 
