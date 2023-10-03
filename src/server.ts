@@ -282,6 +282,7 @@ app.post(
         image: (req.query.image as string) || undefined,
         emailVerified: undefined,
         perm_id: (req.query.perm_id as string) || undefined,
+        progression_lvl: undefined,
       });
       res.json({ message: "Player Created", user_id: user.id });
     } catch (error) {
@@ -304,6 +305,7 @@ app.put(
         image: (req.query.image as string) || undefined,
         emailVerified: undefined,
         perm_id: (req.query.perm_id as string) || undefined,
+        progression_lvl: undefined,
       });
       res.json({ message: "Player Updated", user_id: user.id });
     } catch (error) {
