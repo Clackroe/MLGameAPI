@@ -124,20 +124,21 @@ model TeamInEquationMatch {
 }
 
 model User {
-  id            String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name          String     @unique @db.VarChar(255)
-  epic_id       String?    @unique @db.VarChar(255)
-  email         String?    @unique
-  image         String?
-  team_id       String?    @db.Uuid
-  emailVerified DateTime?
-  discord_id    String     @default(dbgenerated("('@'::text || (name)::text)")) @db.VarChar(255)
-  perm_id       String?    @db.Uuid
-  Account       Account[]
-  Equation      Equation[]
-  Session       Session[]
-  Perms         Perms?     @relation(fields: [perm_id], references: [id], onDelete: Restrict, onUpdate: Restrict)
-  Team          Team?      @relation(fields: [team_id], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  id              String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name            String     @unique @db.VarChar(255)
+  epic_id         String?    @unique @db.VarChar(255)
+  email           String?    @unique
+  image           String?
+  team_id         String?    @default(dbgenerated("'e968e4fc-80e6-4868-8e83-d6451c2bfcaa'::uuid")) @db.Uuid
+  emailVerified   DateTime?
+  discord_id      String     @default(dbgenerated("('@'::text || (name)::text)")) @db.VarChar(255)
+  perm_id         String?    @db.Uuid
+  progression_lvl Int        @default(0)
+  Account         Account[]
+  Equation        Equation[]
+  Session         Session[]
+  Perms           Perms?     @relation(fields: [perm_id], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  Team            Team?      @relation(fields: [team_id], references: [id], onDelete: Restrict, onUpdate: Restrict)
 }
 
 model VerificationToken {
