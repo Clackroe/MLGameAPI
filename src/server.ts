@@ -418,7 +418,7 @@ app.post(
     try {
       const id = await db.addTeamToEquationMatch(
         req.params.id as string,
-        req.params.equationId as string,
+        req.query.equationId as string,
         req.query.teamId as string,
         parseInt(req.query.score as string),
 
