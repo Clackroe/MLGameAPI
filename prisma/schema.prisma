@@ -92,6 +92,8 @@ model Team {
   global_sigma        Decimal?              @default(8.3333333333) @db.Decimal
   district_ranking    Decimal?              @db.Decimal
   global_ranking      Decimal?              @db.Decimal
+  global_rank_title   String?
+  district_rank_title String?
   Equation            Equation[]
   Job                 Job[]
   District            District?             @relation(fields: [districtId], references: [id])
@@ -104,7 +106,7 @@ model TeamInEquationMatch {
   equationMatchId        String        @db.Uuid
   teamId                 String        @db.Uuid
   score                  Int?          @default(0)
-  equationID             String        @db.Uuid
+  equationID             String?       @db.Uuid
   winner                 Boolean?      @default(false)
   id                     String        @id @unique @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   district_mu_after      Decimal?      @db.Decimal
@@ -118,7 +120,7 @@ model TeamInEquationMatch {
   global_sigma_after     Decimal?      @db.Decimal
   global_sigma_before    Decimal?      @db.Decimal
   districtId             String?       @db.Uuid
-  Equation               Equation      @relation(fields: [equationID], references: [id])
+  Equation               Equation?     @relation(fields: [equationID], references: [id])
   EquationMatch          EquationMatch @relation(fields: [equationMatchId], references: [id])
   Team                   Team          @relation(fields: [teamId], references: [id])
 }

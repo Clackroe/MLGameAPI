@@ -668,7 +668,7 @@ export async function addTeamToEquationMatch(
         district_sigma_before: team.district_sigma,
         global_mu_before: team.global_mu,
         global_sigma_before: team.global_sigma,
-
+        
         districtId: team.districtId,
 
         score: score,
