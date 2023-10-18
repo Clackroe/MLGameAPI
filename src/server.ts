@@ -420,6 +420,8 @@ app.post(
   "/matches/addTeam/:id",
   async (req: Request, res: Response, next: NextFunction) => {
     try {
+      const printReq = JSON.stringify(req);
+      console.log("REQUEST: " + printReq);
       const id = await db.addTeamToEquationMatch(
         req.params.id as string,
         req.query.equationId as string,
