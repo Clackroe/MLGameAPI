@@ -675,6 +675,7 @@ export async function addTeamToEquationMatch(
         winner: winner,
       },
     });
+    console.log('DEBUGGGG: ' + match);
     return match.equationMatchId;
   } catch (error) {
     console.error("Error adding team", error);
