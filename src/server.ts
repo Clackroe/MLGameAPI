@@ -130,6 +130,8 @@ async function logRequest(req: Request, res: Response, next: NextFunction) {
     'Request Path: ',
     req.path,
     '\n',
+    'RESPONSE: ',
+    res.json,
     `request at ${new Date().toISOString()}`
   );
   next();
@@ -440,7 +442,7 @@ app.post(
 
         Boolean(req.query.winner as string)
       );
-      res.json({ message: "Team Added to Match", id: id });
+      res.json({ message: "Team Added to Match", id: id, winner: req.query.winner });
     } catch (error) {
       next(error);
     }
