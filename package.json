@@ -25,6 +25,7 @@
     "express-async-errors": "^3.1.1",
     "express-rate-limit": "^6.9.0",
     "openskill": "^3.1.0",
+    "query-string": "^8.1.0",
     "react-smartbanner": "^5.1.4",
     "uuid": "^9.0.0"
   },
