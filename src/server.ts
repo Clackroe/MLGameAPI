@@ -3,7 +3,6 @@ import { NextFunction, Request, Response } from "express";
 import express from "express";
 import { v4 as uuidv4 } from "uuid";
 const app = express();
-app.use(express.json());
 const port = 3000; // default port to listen
 
 import { MatchStatus } from "@prisma/client";
@@ -118,6 +117,11 @@ async function logRequest(req: Request, res: Response, next: NextFunction) {
   console.log(
     `${tokenData.token.name} made a `,
     req.method,
+    'Request URL: ',
+    req.originalUrl,
+    'Request Params: ',
+    req.params,
+    'Request Path: ',
     req.path,
     `request at ${new Date().toISOString()}`
   );
@@ -430,12 +434,6 @@ app.post(
         Boolean(req.query.winner as string)
       );
       res.json({ message: "Team Added to Match", id: id });
-      app.use((req, next) => {
-        console.log(req.method, req.url);  // Log the request method and URL
-        console.log('Headers:', req.headers);  // Log the headers
-        console.log('Body:', req.body);  // Log the body
-          // Call the next middleware function
-      })
     } catch (error) {
       next(error);
     }
