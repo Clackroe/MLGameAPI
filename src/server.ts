@@ -124,14 +124,12 @@ async function logRequest(req: Request, res: Response, next: NextFunction) {
     'REQ.QUERY: ',
     req.query,
     '\n',
-    'Request Params: ',
-    req.params,
+    'Request TYPE ',
+    typeof(req.query),
     '\n',
     'Request Path: ',
     req.path,
     '\n',
-    'RESPONSE: ',
-    res,
     `request at ${new Date().toISOString()}`
   );
   next();
