@@ -117,12 +117,19 @@ async function logRequest(req: Request, res: Response, next: NextFunction) {
   console.log(
     `${tokenData.token.name} made a `,
     req.method,
+    '\n',
     'Request URL: ',
     req.originalUrl,
+    '\n',
+    'CHECK TYPE OF URL: ',
+    typeof(req.originalUrl),
+    '\n',
     'Request Params: ',
     req.params,
+    '\n',
     'Request Path: ',
     req.path,
+    '\n',
     `request at ${new Date().toISOString()}`
   );
   next();
