@@ -659,7 +659,9 @@ export async function addTeamToEquationMatch(
         id: teamID,
       },
     });
-    console.log('TeamID: ' + teamID + 'WINNER: ' +  winner)
+    console.log('\n' + 'TeamID: ' + teamID + '\n' + 'WINNER: ' +  winner);
+    const printTeam = JSON.stringify(team)
+    console.log('\n' + 'TEAM OBJ: ' + printTeam);
     const match = await prisma.teamInEquationMatch.create({
       data: {
         equationMatchId: matchID,
