@@ -430,12 +430,7 @@ app.delete(
 app.post(
   "/matches/addTeam/:id",
   async (req: Request, res: Response, next: NextFunction) => {
-    if (req.query.winner == 'false') {
-      var winBool: boolean = false;
-    } else {winBool = true}
-   
-
-
+    let winBool: boolean = (req.query.winner === 'false') ? false : true;
     try {
       const id = await db.addTeamToEquationMatch(
         req.params.id as string,
