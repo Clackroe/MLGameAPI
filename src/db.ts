@@ -659,7 +659,7 @@ export async function addTeamToEquationMatch(
         id: teamID,
       },
     });
-    console.log('\n' + 'TeamID: ' + teamID + '\n' + 'WINNER: ' +  winner);
+    console.log('\n' + 'TeamID: ' + teamID + '\n' + 'WINNER: ' +  winner + 'WINNERTYPE: ' + typeof(winner));
     const printTeam = JSON.stringify(team)
     console.log('\n' + 'TEAM OBJ: ' + printTeam);
     console.log('\n' + 'SCORE: ' + score);
