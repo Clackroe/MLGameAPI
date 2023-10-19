@@ -434,11 +434,11 @@ app.post(
     try {
       const id = await db.addTeamToEquationMatch(
         req.params.id as string,
-        req.query.equationId as string,
-        req.query.teamId as string,
-        parseInt(req.query.score as string),
+        req.params.equationId as string,
+        req.params.teamId as string,
+        parseInt(req.params.score as string),
 
-        Boolean(req.query.winner as string)
+        Boolean(req.params.winner as string)
       );
       res.json({ message: "Team Added to Match", id: id });
     } catch (error) {
