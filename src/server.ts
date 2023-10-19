@@ -131,7 +131,7 @@ async function logRequest(req: Request, res: Response, next: NextFunction) {
     req.path,
     '\n',
     'RESPONSE: ',
-    res.json,
+    res,
     `request at ${new Date().toISOString()}`
   );
   next();
