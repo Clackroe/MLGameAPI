@@ -433,7 +433,7 @@ app.delete(
 app.post(
   "/matches/addTeam/:id",
   async (req: Request, res: Response, next: NextFunction) => {
-
+    console.log(req.query.winner);
     if (!req.query.winner) {
       var winBool: boolean = false;
     }
