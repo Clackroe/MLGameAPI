@@ -1,5 +1,4 @@
 import "express-async-errors";
-import queryString from "query-string";
 import { NextFunction, Request, Response } from "express";
 import express from "express";
 import { v4 as uuidv4 } from "uuid";
@@ -429,18 +428,25 @@ app.delete(
   }
 );
 
+
+
 app.post(
   "/matches/addTeam/:id",
   async (req: Request, res: Response, next: NextFunction) => {
-    const queryString = require('query-string')
+
+    if (!req.query.winner) {
+      var winBool: boolean = false;
+    }
+   
+
+
     try {
       const id = await db.addTeamToEquationMatch(
         req.params.id as string,
         req.query.equationId as string,
         req.query.teamId as string,
         parseInt(req.query.score as string),
-        queryString.parse('winner=false', {parseBooleans: false})
-        // Boolean(req.query.winner as string)
+        winBool
       );
       res.json({ message: "Team Added to Match", id: id, winner: req.query.winner });
     } catch (error) {
