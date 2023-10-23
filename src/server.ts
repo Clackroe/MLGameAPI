@@ -117,16 +117,16 @@ async function logRequest(req: Request, res: Response, next: NextFunction) {
   console.log(
     `${tokenData.token.name} made a `,
     req.method,
-    '\n',
-    'Request URL: ',
+    "\n",
+    "Request URL: ",
     req.originalUrl,
-    '\n',
-    'REQ.QUERY: ',
+    "\n",
+    "REQ.QUERY: ",
     req.query,
-    '\n',
-    'Request Path: ',
+    "\n",
+    "Request Path: ",
     req.path,
-    '\n',
+    "\n",
     `request at ${new Date().toISOString()}`
   );
   next();
@@ -174,7 +174,7 @@ app.get(
   }
 );
 
-app.post("/teams", async (req: Request, res: Response, next: NextFunction) => { //Erin - needs to be user
+app.post("/teams", async (req: Request, res: Response, next: NextFunction) => {
   try {
     const team = await db.upsertTeam({
       id: uuidv4(),
@@ -205,7 +205,7 @@ app.post("/teams", async (req: Request, res: Response, next: NextFunction) => { 
 
 app.put(
   "/teams/:id",
-  async (req: Request, res: Response, next: NextFunction) => { //Erin - needs to be user
+  async (req: Request, res: Response, next: NextFunction) => {
     try {
       const team = await db.upsertTeam({
         id: (req.params.id as string) || undefined,
@@ -247,7 +247,7 @@ app.delete(
   }
 );
 
-// //Users Routes
+//-------------------------------User Routes-------------------------------
 // can also do EITHER /users?epic_id={epic_id} OR /users?discord_id={discord_id}
 app.get("/players", async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -283,7 +283,8 @@ app.get(
 
 app.post(
   "/players",
-  async (req: Request, res: Response, next: NextFunction) => { //Erin - new fields need to be added
+  async (req: Request, res: Response, next: NextFunction) => {
+    //Erin - new fields need to be added
     try {
       const user = await db.upsertUser({
         id: uuidv4(),
@@ -296,6 +297,13 @@ app.post(
         emailVerified: undefined,
         perm_id: (req.query.perm_id as string) || undefined,
         progression_lvl: parseInt(req.query.progression_lvl as string),
+        totalEqMatches: undefined,
+        totalEqMatchesWon: undefined,
+        totalEqMatchesLost: undefined,
+        global_mu: undefined,
+        global_sigma: undefined,
+        global_ranking: undefined,
+        global_rank_title: undefined,
       });
       res.json({ message: "Player Created", user_id: user.id });
     } catch (error) {
@@ -306,7 +314,8 @@ app.post(
 
 app.put(
   "/players/:id",
-  async (req: Request, res: Response, next: NextFunction) => { //Erin - New fields need to be added
+  async (req: Request, res: Response, next: NextFunction) => {
+    //Erin - New fields need to be added
     try {
       const user = await db.upsertUser({
         id: (req.params.id as string) || undefined,
@@ -319,6 +328,13 @@ app.put(
         emailVerified: undefined,
         perm_id: (req.query.perm_id as string) || undefined,
         progression_lvl: parseInt(req.query.progression_lvl as string),
+        global_mu: undefined,
+        global_sigma: undefined,
+        global_ranking: undefined,
+        global_rank_title: undefined,
+        totalEqMatches: undefined,
+        totalEqMatchesWon: undefined,
+        totalEqMatchesLost: undefined,
       });
       res.json({ message: "Player Updated", user_id: user.id });
     } catch (error) {
@@ -343,7 +359,7 @@ app.delete(
 
 // //Matches Routes
 // Can also get matches by team_id /matches?team_id={team_id} or team_name /matches?team_name={team_name} or by model_id /matches?model_id={model_id}
-app.get("/matches", async (req: Request, res: Response, next: NextFunction) => { 
+app.get("/matches", async (req: Request, res: Response, next: NextFunction) => {
   try {
     const team_id = req.query.team_id as string;
     if (team_id) {
@@ -425,21 +441,24 @@ app.delete(
   }
 );
 
-
-
 app.post(
   "/matches/addTeam/:id",
   async (req: Request, res: Response, next: NextFunction) => {
-    let winBool: boolean = (req.query.winner === 'false') ? false : true;
+    let winBool: boolean = req.query.winner === "false" ? false : true;
     try {
-      const id = await db.addTeamToEquationMatch( //Erin - Needs to be adding user rather than team
+      const id = await db.addTeamToEquationMatch(
+        //Erin - Needs to be adding user rather than team
         req.params.id as string,
         req.query.equationId as string,
         req.query.teamId as string,
         parseInt(req.query.score as string),
         winBool
       );
-      res.json({ message: "Team Added to Match", id: id, winner: req.query.winner });
+      res.json({
+        message: "Team Added to Match",
+        id: id,
+        winner: req.query.winner,
+      });
     } catch (error) {
       next(error);
     }
