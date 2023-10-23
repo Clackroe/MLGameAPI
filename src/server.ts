@@ -174,7 +174,7 @@ app.get(
   }
 );
 
-app.post("/teams", async (req: Request, res: Response, next: NextFunction) => {
+app.post("/teams", async (req: Request, res: Response, next: NextFunction) => { //Erin - needs to be user
   try {
     const team = await db.upsertTeam({
       id: uuidv4(),
@@ -205,7 +205,7 @@ app.post("/teams", async (req: Request, res: Response, next: NextFunction) => {
 
 app.put(
   "/teams/:id",
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (req: Request, res: Response, next: NextFunction) => { //Erin - needs to be user
     try {
       const team = await db.upsertTeam({
         id: (req.params.id as string) || undefined,
@@ -283,7 +283,7 @@ app.get(
 
 app.post(
   "/players",
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (req: Request, res: Response, next: NextFunction) => { //Erin - new fields need to be added
     try {
       const user = await db.upsertUser({
         id: uuidv4(),
@@ -306,7 +306,7 @@ app.post(
 
 app.put(
   "/players/:id",
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (req: Request, res: Response, next: NextFunction) => { //Erin - New fields need to be added
     try {
       const user = await db.upsertUser({
         id: (req.params.id as string) || undefined,
@@ -343,11 +343,11 @@ app.delete(
 
 // //Matches Routes
 // Can also get matches by team_id /matches?team_id={team_id} or team_name /matches?team_name={team_name} or by model_id /matches?model_id={model_id}
-app.get("/matches", async (req: Request, res: Response, next: NextFunction) => {
+app.get("/matches", async (req: Request, res: Response, next: NextFunction) => { 
   try {
     const team_id = req.query.team_id as string;
     if (team_id) {
-      const matches = await db.getEquationMatchesByTeamId(team_id);
+      const matches = await db.getEquationMatchesByTeamId(team_id); //Erin - needs to query User rather than Team
       res.json(matches);
     } else {
       const matches = await db.getAllMatches();
@@ -432,7 +432,7 @@ app.post(
   async (req: Request, res: Response, next: NextFunction) => {
     let winBool: boolean = (req.query.winner === 'false') ? false : true;
     try {
-      const id = await db.addTeamToEquationMatch(
+      const id = await db.addTeamToEquationMatch( //Erin - Needs to be adding user rather than team
         req.params.id as string,
         req.query.equationId as string,
         req.query.teamId as string,
@@ -450,7 +450,7 @@ app.post(
   "/matches/finishMatch/:id",
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      db.updateEquationMatchTeamMuSigma(req.params.id);
+      db.updateEquationMatchTeamMuSigma(req.params.id); //Erin - Needs to be updating the mu sigma of the user
       res.json({
         message: "Successfully finished match and calculations",
         id: req.params.id,
