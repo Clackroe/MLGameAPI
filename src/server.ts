@@ -361,7 +361,7 @@ app.get("/matches", async (req: Request, res: Response, next: NextFunction) => {
   try {
     const team_id = req.query.team_id as string;
     if (team_id) {
-      const matches = await db.getEquationMatchesByTeamId(team_id); //Erin - needs to query User rather than Team
+      const matches = await db.getEquationMatchesByTeamId(team_id); //Erin - needs invoke the getEqatuionMatchesByUserId function
       res.json(matches);
     } else {
       const matches = await db.getAllMatches();

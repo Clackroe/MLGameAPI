@@ -593,7 +593,7 @@ export async function getEquationMatchesByUserId(id: string) {
     return matches;
   } catch (error) {
     console.error("Error getting matches", error);
-    upsertTeam;
+    upsertUser;
     throw new Error("Failed to get matches from user");
   }
 }
@@ -601,7 +601,7 @@ export async function getEquationMatchesByUserId(id: string) {
 
 // -------------------------------- TeamInEquationMatch --------------------------------
 
-export async function getTeamInEquationMatchesByMatchID(id: string) {
+export async function getTeamInEquationMatchesByMatchID(id: string) { //Erin - don't need to recreate with User b/c this is not called anywhere?
   try {
     const teamInEquationMatch = await prisma.teamInEquationMatch.findMany({
       where: {
@@ -620,7 +620,7 @@ export async function getTeamInEquationMatchesByMatchID(id: string) {
   }
 }
 
-export async function upsertTeamInEquationmatch(data: TeamInEquationMatch) {
+export async function upsertTeamInEquationmatch(data: TeamInEquationMatch) { //Erin - don't need to recreate with User b/c this is not called anywhere?
   try {
     const team = await prisma.team.findUnique({
       where: {
@@ -644,7 +644,7 @@ export async function upsertTeamInEquationmatch(data: TeamInEquationMatch) {
   }
 }
 
-export async function deleteTeamInEquationMatch(id: string) {
+export async function deleteTeamInEquationMatch(id: string) { //Erin - don't need to recreate with User b/c this is not called anywhere?
   try {
     const teamInEquationMatch = await prisma.teamInEquationMatch.delete({
       where: { id: id },
@@ -676,6 +676,7 @@ export async function updateEquationMatchTeamMuSigma(eqMatchID: string) {
     throw new Error("Failed to update EquationMatch Team Mu Sigma.");
   }
 }
+
 
 export async function addTeamToEquationMatch(
   matchID: string,
@@ -761,6 +762,16 @@ type TeamMatchData = {
   equationMatchId: string;
   teamInEquationMatchID: string;
 };
+
+type UserMatchData = {
+  global_sigma_before: number;
+  global_mu_before: number;
+  score: number;
+  userId: string;
+  matchId: string;
+  equationMatchId: string;
+  userInEquationMatchID: string;
+}
 
 async function getTeamMatchRatings(
   eqMatchID: string
