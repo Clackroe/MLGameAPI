@@ -445,7 +445,6 @@ app.post(
     let winBool: boolean = req.query.winner === "false" ? false : true;
     try {
       const id = await db.addTeamToEquationMatch(
-        //Erin - Needs to be adding user rather than team
         req.params.id as string,
         req.query.equationId as string,
         req.query.teamId as string,
@@ -464,12 +463,36 @@ app.post(
 );
 
 app.post(
+  "/matches/addUser/:id", //Erin - New endpoint for adding a User to an EquationMatch using their userId 
+  async (req: Request, res: Response, next: NextFunction) => {
+    let winBool: boolean = req.query.winner === "false" ? false : true;
+    try {
+      const id = await db.addUserToEquationMatch(
+        req.params.id as string,
+        req.query.equationId as string,
+        req.query.userId as string,
+        parseInt(req.query.score as string),
+        winBool
+      );
+      res.json({
+        message: "User Added to Match",
+        id: id,
+        winner: req.query.winner,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+app.post(
   "/matches/finishMatch/:id",
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      db.updateEquationMatchTeamMuSigma(req.params.id); //Erin - Needs to be updating the mu sigma of the user
+      db.updateEquationMatchTeamMuSigma(req.params.id);
+      db.updateEquationMatchUserMuSigma(req.params.id); //Erin - will use EquationMatch id to update the scores/ratings of User 
       res.json({
-        message: "Successfully finished match and calculations",
+        message: "Successfully finished match and calculations for Team and User",
         id: req.params.id,
       });
     } catch (error) {
