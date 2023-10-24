@@ -452,7 +452,7 @@ export async function getAllTeamsByDistrict(district_id: string) {
 
 export async function getAllUsers() {
   try {
-    const users = await prisma.user.findMany({ //Erin - Does this need to include Job?
+    const users = await prisma.user.findMany({
       include: {
         Equation: true,
         Team: true,

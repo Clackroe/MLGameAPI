@@ -9,6 +9,23 @@ export type teamMatchRating = {
   matchId: string;
   teamInEquationMatchID: string;
 };
+
+export type userMatchRating = {
+  sigma_before: number;
+  sigma_after?: number;
+  mu_before: number;
+  score: number;
+  userId: string;
+  matchId: string;
+  userInEquationMatchID: string;
+}
+
+interface ratedUserMatch extends userMatchRating {
+  mu_after: number,
+  sigma_after: number,
+  ranking: number,
+}
+
 interface ratedTeamMatch extends teamMatchRating {
   mu_after: number;
   sigma_after: number;
