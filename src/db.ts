@@ -599,11 +599,12 @@ export async function getEquationMatchesByUserId(id: string) {
   }
 }
 // -------------------------------- UserInEquationMatch --------------------------------
+//Erin - May want to come back and complete CRUD
 export async function updateEquationMatchUserMuSigma(eqMatchID: string) {
   try {
-    const ratings = await getTeamMatchRatings(eqMatchID);
+    const ratings = await getUserMatchRatings(eqMatchID);
 
-    await updateScores(ratings);
+    await updateUserScores(ratings);
 
     await prisma.equationMatch.update({
       where: {
@@ -615,8 +616,8 @@ export async function updateEquationMatchUserMuSigma(eqMatchID: string) {
       },
     });
   } catch (error) {
-    console.error("Error updating EquationMatch Team Mu Sigma:", error);
-    throw new Error("Failed to update EquationMatch Team Mu Sigma.");
+    console.error("Error updating EquationMatch User Mu Sigma:", error);
+    throw new Error("Failed to update EquationMatch User Mu Sigma.");
   }
 }
 // -------------------------------- TeamInEquationMatch --------------------------------
