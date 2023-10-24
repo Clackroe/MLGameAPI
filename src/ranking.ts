@@ -9,6 +9,23 @@ export type teamMatchRating = {
   matchId: string;
   teamInEquationMatchID: string;
 };
+
+export type userMatchRating = {
+  sigma_before: number;
+  sigma_after?: number;
+  mu_before: number;
+  score: number;
+  userId: string;
+  matchId: string;
+  userInEquationMatchID: string;
+}
+
+interface ratedUserMatch extends userMatchRating {
+  mu_after: number,
+  sigma_after: number,
+  ranking: number,
+}
+
 interface ratedTeamMatch extends teamMatchRating {
   mu_after: number;
   sigma_after: number;
@@ -37,4 +54,28 @@ export function calculateRankings(teams: teamMatchRating[]): ratedTeamMatch[] {
   });
 
   return newTeamsWithIds;
+}
+
+export function calculateUserRankings(users: userMatchRating[]): ratedUserMatch[] {
+  const userRatings = users.map((user) => {
+    return [rating({ mu: user.mu_before, sigma: user.sigma_before })];
+  });
+
+  const scores = users.map((user) => user.score);
+
+  const newRankings = rate(userRatings, { score: scores });
+
+  // Create new user objects with updated data while preserving the IDs
+  const newUsersWithIds = users.map((userWithId, index) => {
+    const updatedUser = {
+      ...userWithId,
+      mu_after: newRankings[index][0].mu,
+      sigma_after: newRankings[index][0].sigma,
+      ranking: ordinal(newRankings[index][0]),
+    };
+
+    return updatedUser;
+  });
+
+  return newUsersWithIds;
 }
