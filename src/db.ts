@@ -578,6 +578,27 @@ export async function getEquationMatchesByTeamId(id: string) {
   }
 }
 
+export async function getEquationMatchesByUserId(id: string) {
+  try {
+    const matches = await prisma.equationMatch.findMany({
+      include: {
+        UserInEquationMatch: {
+          where: {
+            userId: id,
+          },
+        },
+      },
+    });
+
+    return matches;
+  } catch (error) {
+    console.error("Error getting matches", error);
+    upsertTeam;
+    throw new Error("Failed to get matches from user");
+  }
+}
+
+
 // -------------------------------- TeamInEquationMatch --------------------------------
 
 export async function getTeamInEquationMatchesByMatchID(id: string) {
