@@ -599,11 +599,12 @@ export async function getEquationMatchesByUserId(id: string) {
   }
 }
 // -------------------------------- UserInEquationMatch --------------------------------
+//Erin - May want to come back and complete CRUD
 export async function updateEquationMatchUserMuSigma(eqMatchID: string) {
   try {
-    const ratings = await getTeamMatchRatings(eqMatchID);
+    const ratings = await getUserMatchRatings(eqMatchID);
 
-    await updateScores(ratings);
+    await updateUserScores(ratings);
 
     await prisma.equationMatch.update({
       where: {
@@ -615,8 +616,40 @@ export async function updateEquationMatchUserMuSigma(eqMatchID: string) {
       },
     });
   } catch (error) {
-    console.error("Error updating EquationMatch Team Mu Sigma:", error);
-    throw new Error("Failed to update EquationMatch Team Mu Sigma.");
+    console.error("Error updating EquationMatch User Mu Sigma:", error);
+    throw new Error("Failed to update EquationMatch User Mu Sigma.");
+  }
+}
+
+export async function addUserToEquationMatch(
+  matchID: string,
+  equationID: string,
+  userID: string,
+  score: number,
+  winner: boolean
+) {
+  try {
+    const user = await prisma.user.findUnique({
+      where: {
+        id: userID,
+      },
+    });
+
+    const match = await prisma.userInEquationMatch.create({
+      data: {
+        equationMatchId: matchID,
+        equationID: equationID,
+        userId: userID,
+        user_global_mu_before: user.global_mu,
+        user_global_sigma_before: user.global_sigma,
+        score: score,
+        winner: winner,
+      },
+    });
+    return match.equationMatchId;
+  } catch (error) {
+    console.error("Error adding user", error);
+    throw new Error("Failed to add user to the match...");
   }
 }
 // -------------------------------- TeamInEquationMatch --------------------------------
