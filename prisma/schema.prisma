@@ -193,19 +193,20 @@ model Perms {
 
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model UserInEquationMatch {
-  equationMatchId          String        @db.Uuid
-  userId                   String        @db.Uuid
-  score                    Int?          @default(0)
-  equationID               String?       @db.Uuid
-  winner                   Boolean?      @default(false)
-  id                       String        @id @unique @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  user_global_mu_after     Decimal?      @db.Decimal
-  user_global_mu_before    Decimal?      @db.Decimal
-  user_global_sigma_after  Decimal?      @db.Decimal
-  user_global_sigma_before Decimal?      @db.Decimal
-  Equation                 Equation?     @relation(fields: [equationID], references: [id])
-  EquationMatch            EquationMatch @relation(fields: [equationMatchId], references: [id])
-  User                     User          @relation(fields: [userId], references: [id])
+  equationMatchId           String        @db.Uuid
+  userId                    String        @db.Uuid
+  score                     Int?          @default(0)
+  equationID                String?       @db.Uuid
+  winner                    Boolean?      @default(false)
+  id                        String        @id @unique @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_global_mu_after      Decimal?      @db.Decimal
+  user_global_mu_before     Decimal?      @db.Decimal
+  user_global_sigma_after   Decimal?      @db.Decimal
+  user_global_sigma_before  Decimal?      @db.Decimal
+  user_global_ranking_after Decimal?      @db.Decimal
+  Equation                  Equation?     @relation(fields: [equationID], references: [id])
+  EquationMatch             EquationMatch @relation(fields: [equationMatchId], references: [id])
+  User                      User          @relation(fields: [userId], references: [id])
 }
 
 enum ApiAccess {
