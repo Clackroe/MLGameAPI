@@ -43,6 +43,7 @@ export async function getEquationMatchById(matchId: string) {
       where: { id: matchId },
       include: {
         TeamInEquationMatch: true,
+        UserInEquationMatch: true,
       },
     });
     return eqmatch;
@@ -169,7 +170,7 @@ export async function deleteTeam(teamId: string) {
 //-------------------------------- USER --------------------------------
 
 // Function to upsert a user
-export async function upsertUser(data: User) { //Erin - need to add new fields from User table
+export async function upsertUser(data: User) {
   try {
     const user = await prisma.user.upsert({
       where: { id: data.id },
@@ -451,11 +452,12 @@ export async function getAllTeamsByDistrict(district_id: string) {
 
 export async function getAllUsers() {
   try {
-    const users = await prisma.user.findMany({
+    const users = await prisma.user.findMany({ //Erin - Does this need to include Job?
       include: {
         Equation: true,
         Team: true,
         Perms: true,
+        UserInEquationMatch: true,
       },
     });
     return users;
@@ -470,6 +472,7 @@ export async function getAllMatches() {
     const matches = await prisma.equationMatch.findMany({
       include: {
         TeamInEquationMatch: true,
+        UserInEquationMatch: true,
       },
     });
     return matches;
