@@ -6,10 +6,11 @@ import {
   Equation,
   /*Model,*/ Job /*VerificationToken*/,
   TeamInEquationMatch,
+  UserInEquationMatch,
 } from "@prisma/client";
 // import e from "express";
 import * as rank from "./ranking";
-import { teamMatchRating } from "./ranking";
+import { teamMatchRating, userMatchRating } from "./ranking";
 
 const prisma = new PrismaClient();
 
@@ -597,8 +598,27 @@ export async function getEquationMatchesByUserId(id: string) {
     throw new Error("Failed to get matches from user");
   }
 }
+// -------------------------------- UserInEquationMatch --------------------------------
+export async function updateEquationMatchUserMuSigma(eqMatchID: string) {
+  try {
+    const ratings = await getTeamMatchRatings(eqMatchID);
 
+    await updateScores(ratings);
 
+    await prisma.equationMatch.update({
+      where: {
+        id: eqMatchID,
+      },
+      data: {
+        ended: new Date(),
+        status: "FINISHED",
+      },
+    });
+  } catch (error) {
+    console.error("Error updating EquationMatch Team Mu Sigma:", error);
+    throw new Error("Failed to update EquationMatch Team Mu Sigma.");
+  }
+}
 // -------------------------------- TeamInEquationMatch --------------------------------
 
 export async function getTeamInEquationMatchesByMatchID(id: string) { //Erin - don't need to recreate with User b/c this is not called anywhere?
@@ -763,15 +783,7 @@ type TeamMatchData = {
   teamInEquationMatchID: string;
 };
 
-type UserMatchData = {
-  global_sigma_before: number;
-  global_mu_before: number;
-  score: number;
-  userId: string;
-  matchId: string;
-  equationMatchId: string;
-  userInEquationMatchID: string;
-}
+
 
 async function getTeamMatchRatings(
   eqMatchID: string
@@ -909,4 +921,95 @@ async function updateScores(ratings: {
       });
     });
   }
+}
+
+// -------------------------------- User Match Rating --------------------------------
+type UserMatchData = {
+  global_sigma_before: number;
+  global_mu_before: number;
+  score: number;
+  userId: string;
+  matchId: string;
+  equationMatchId: string;
+  userInEquationMatchID: string;
+}
+
+async function getUserMatchRatings(
+  eqMatchID: string
+): Promise<{ Global: userMatchRating[]}> {
+  try {
+    const match = await prisma.equationMatch.findUnique({
+      where: {
+        id: eqMatchID,
+      },
+      include: {
+        UserInEquationMatch: true,
+      },
+    });
+
+    const usersAll: UserMatchData[] = match.UserInEquationMatch.map(
+      (user: UserInEquationMatch) => {
+        return {
+          global_sigma_before: user.user_global_sigma_before.toNumber(),
+          global_mu_before: user.user_global_mu_before.toNumber(),
+
+          score: user.score,
+          userId: user.userId,
+          matchId: user.equationMatchId,
+          equationMatchId: user.equationMatchId,
+          userInEquationMatchID: user.id,
+        };
+      }
+    );
+
+    const usersGlobal: userMatchRating[] = usersAll.map(
+      (user: UserMatchData) => {
+        return {
+          sigma_before: user.global_sigma_before,
+          mu_before: user.global_mu_before,
+          score: user.score,
+          userId: user.userId,
+          matchId: user.equationMatchId,
+          userInEquationMatchID: user.userInEquationMatchID,
+        };
+      }
+    );
+
+      return { Global: usersGlobal }
+
+    //---
+  } catch (error) {
+    console.error("Error updating EquationMatch User Mu Sigma:", error);
+    throw new Error("Failed to update EquationMatch User Mu Sigma.");
+  }
+}
+
+
+async function updateUserScores(ratings: {Global: userMatchRating[]}) {
+  const global_ratings = rank.calculateUserRankings(ratings.Global);
+
+
+  global_ratings.map(async (user) => {
+    await prisma.user.update({
+      where: {
+        id: user.userId,
+      },
+      data: {
+        global_mu: user.mu_after,
+        global_sigma: user.sigma_after,
+        global_ranking: user.ranking,
+      },
+    });
+    await prisma.userInEquationMatch.update({
+      where: {
+        id: user.userInEquationMatchID,
+      },
+      data: {
+        user_global_mu_after: user.mu_after,
+        user_global_sigma_after: user.sigma_after,
+        user_global_ranking_after: user.ranking,
+      },
+    });
+  });
+
 }
