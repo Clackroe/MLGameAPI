@@ -620,6 +620,38 @@ export async function updateEquationMatchUserMuSigma(eqMatchID: string) {
     throw new Error("Failed to update EquationMatch User Mu Sigma.");
   }
 }
+
+export async function addUserToEquationMatch(
+  matchID: string,
+  equationID: string,
+  userID: string,
+  score: number,
+  winner: boolean
+) {
+  try {
+    const user = await prisma.user.findUnique({
+      where: {
+        id: userID,
+      },
+    });
+
+    const match = await prisma.userInEquationMatch.create({
+      data: {
+        equationMatchId: matchID,
+        equationID: equationID,
+        userId: userID,
+        user_global_mu_before: user.global_mu,
+        user_global_sigma_before: user.global_sigma,
+        score: score,
+        winner: winner,
+      },
+    });
+    return match.equationMatchId;
+  } catch (error) {
+    console.error("Error adding user", error);
+    throw new Error("Failed to add user to the match...");
+  }
+}
 // -------------------------------- TeamInEquationMatch --------------------------------
 
 export async function getTeamInEquationMatchesByMatchID(id: string) { //Erin - don't need to recreate with User b/c this is not called anywhere?
