@@ -216,6 +216,7 @@ export async function getUserById(userId: string) {
         Session: true,
         Team: true,
         Perms: true,
+        UserInEquationMatch: true,
       },
     });
     return user;
