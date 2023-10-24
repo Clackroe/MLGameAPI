@@ -169,7 +169,7 @@ export async function deleteTeam(teamId: string) {
 //-------------------------------- USER --------------------------------
 
 // Function to upsert a user
-export async function upsertUser(data: User) {
+export async function upsertUser(data: User) { //Erin - need to add new fields from User table
   try {
     const user = await prisma.user.upsert({
       where: { id: data.id },
@@ -181,6 +181,9 @@ export async function upsertUser(data: User) {
         team_id: data.team_id || undefined,
         image: data.image || undefined,
         perm_id: data.perm_id || undefined,
+        totalEqMatches: data.totalEqMatches || 0,
+        totalEqMatchesWon: data.totalEqMatchesWon || 0,
+        totalEqMatchesLost: data.totalEqMatchesLost || 0,
       },
       update: {
         name: data.name || undefined,
@@ -190,6 +193,9 @@ export async function upsertUser(data: User) {
         team_id: data.team_id || undefined,
         image: data.image || undefined,
         perm_id: data.perm_id || undefined,
+        totalEqMatches: data.totalEqMatches || 0,
+        totalEqMatchesWon: data.totalEqMatchesWon || 0,
+        totalEqMatchesLost: data.totalEqMatchesLost || 0,
       },
     });
     return user;
