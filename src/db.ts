@@ -43,6 +43,7 @@ export async function getEquationMatchById(matchId: string) {
       where: { id: matchId },
       include: {
         TeamInEquationMatch: true,
+        UserInEquationMatch: true,
       },
     });
     return eqmatch;
@@ -169,7 +170,7 @@ export async function deleteTeam(teamId: string) {
 //-------------------------------- USER --------------------------------
 
 // Function to upsert a user
-export async function upsertUser(data: User) { //Erin - need to add new fields from User table
+export async function upsertUser(data: User) {
   try {
     const user = await prisma.user.upsert({
       where: { id: data.id },
@@ -216,6 +217,7 @@ export async function getUserById(userId: string) {
         Session: true,
         Team: true,
         Perms: true,
+        UserInEquationMatch: true,
       },
     });
     return user;
@@ -450,11 +452,12 @@ export async function getAllTeamsByDistrict(district_id: string) {
 
 export async function getAllUsers() {
   try {
-    const users = await prisma.user.findMany({
+    const users = await prisma.user.findMany({ //Erin - Does this need to include Job?
       include: {
         Equation: true,
         Team: true,
         Perms: true,
+        UserInEquationMatch: true,
       },
     });
     return users;
@@ -469,6 +472,7 @@ export async function getAllMatches() {
     const matches = await prisma.equationMatch.findMany({
       include: {
         TeamInEquationMatch: true,
+        UserInEquationMatch: true,
       },
     });
     return matches;
@@ -574,9 +578,30 @@ export async function getEquationMatchesByTeamId(id: string) {
   }
 }
 
+export async function getEquationMatchesByUserId(id: string) {
+  try {
+    const matches = await prisma.equationMatch.findMany({
+      include: {
+        UserInEquationMatch: {
+          where: {
+            userId: id,
+          },
+        },
+      },
+    });
+
+    return matches;
+  } catch (error) {
+    console.error("Error getting matches", error);
+    upsertUser;
+    throw new Error("Failed to get matches from user");
+  }
+}
+
+
 // -------------------------------- TeamInEquationMatch --------------------------------
 
-export async function getTeamInEquationMatchesByMatchID(id: string) {
+export async function getTeamInEquationMatchesByMatchID(id: string) { //Erin - don't need to recreate with User b/c this is not called anywhere?
   try {
     const teamInEquationMatch = await prisma.teamInEquationMatch.findMany({
       where: {
@@ -595,7 +620,7 @@ export async function getTeamInEquationMatchesByMatchID(id: string) {
   }
 }
 
-export async function upsertTeamInEquationmatch(data: TeamInEquationMatch) {
+export async function upsertTeamInEquationmatch(data: TeamInEquationMatch) { //Erin - don't need to recreate with User b/c this is not called anywhere?
   try {
     const team = await prisma.team.findUnique({
       where: {
@@ -619,7 +644,7 @@ export async function upsertTeamInEquationmatch(data: TeamInEquationMatch) {
   }
 }
 
-export async function deleteTeamInEquationMatch(id: string) {
+export async function deleteTeamInEquationMatch(id: string) { //Erin - don't need to recreate with User b/c this is not called anywhere?
   try {
     const teamInEquationMatch = await prisma.teamInEquationMatch.delete({
       where: { id: id },
@@ -651,6 +676,7 @@ export async function updateEquationMatchTeamMuSigma(eqMatchID: string) {
     throw new Error("Failed to update EquationMatch Team Mu Sigma.");
   }
 }
+
 
 export async function addTeamToEquationMatch(
   matchID: string,
@@ -736,6 +762,16 @@ type TeamMatchData = {
   equationMatchId: string;
   teamInEquationMatchID: string;
 };
+
+type UserMatchData = {
+  global_sigma_before: number;
+  global_mu_before: number;
+  score: number;
+  userId: string;
+  matchId: string;
+  equationMatchId: string;
+  userInEquationMatchID: string;
+}
 
 async function getTeamMatchRatings(
   eqMatchID: string

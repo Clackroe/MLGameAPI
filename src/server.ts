@@ -284,7 +284,6 @@ app.get(
 app.post(
   "/players",
   async (req: Request, res: Response, next: NextFunction) => {
-    //Erin - new fields need to be added
     try {
       const user = await db.upsertUser({
         id: uuidv4(),
@@ -315,7 +314,6 @@ app.post(
 app.put(
   "/players/:id",
   async (req: Request, res: Response, next: NextFunction) => {
-    //Erin - New fields need to be added
     try {
       const user = await db.upsertUser({
         id: (req.params.id as string) || undefined,
@@ -363,7 +361,7 @@ app.get("/matches", async (req: Request, res: Response, next: NextFunction) => {
   try {
     const team_id = req.query.team_id as string;
     if (team_id) {
-      const matches = await db.getEquationMatchesByTeamId(team_id); //Erin - needs to query User rather than Team
+      const matches = await db.getEquationMatchesByTeamId(team_id); //Erin - needs invoke the getEqatuionMatchesByUserId function
       res.json(matches);
     } else {
       const matches = await db.getAllMatches();
