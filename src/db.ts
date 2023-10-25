@@ -1050,6 +1050,7 @@ async function updateUserScores(ratings: {Global: userMatchRating[]}) {
         global_mu: user.mu_after,
         global_sigma: user.sigma_after,
         global_ranking: user.ranking,
+        global_rank_title: user.rank_title,
       },
     });
     await prisma.userInEquationMatch.update({
