@@ -602,8 +602,8 @@ export async function getEquationMatchesByUserId(id: string) {
 //Erin - if EquationMatch.type is ranked, update ratings/scores, if not then just update status of match
 export async function updateEquationMatchUserMuSigma(eqMatchID: string) {
   const matchType = (await getEquationMatchById(eqMatchID)).type;
-  const isRanked = matchType == "Ranked";
-  if (isRanked) {
+  // const isRanked = matchType == "Ranked";
+  // if (isRanked) {
     try {
       const ratings = await getUserMatchRatings(eqMatchID);
 
@@ -622,22 +622,22 @@ export async function updateEquationMatchUserMuSigma(eqMatchID: string) {
       console.error("Error updating EquationMatch User Mu Sigma:", error);
       throw new Error("Failed to update EquationMatch User Mu Sigma.");
     }
-  } else {
-    try {
-      await prisma.equationMatch.update({
-        where: {
-          id: eqMatchID,
-        },
-        data: {
-          ended: new Date(),
-          status: "FINISHED",
-        },
-      });
-    } catch (error) {
-      console.error("Error updating unranked EquationMatch", error);
-      throw new Error("Failed to update unranked EquationMatch.");
-    }
-  }
+  // } else {
+    // try {
+  //     await prisma.equationMatch.update({
+  //       where: {
+  //         id: eqMatchID,
+  //       },
+  //       data: {
+  //         ended: new Date(),
+  //         status: "FINISHED",
+  //       },
+  //     });
+  //   } catch (error) {
+  //     console.error("Error updating unranked EquationMatch", error);
+  //     throw new Error("Failed to update unranked EquationMatch.");
+  //   }
+  // }
 }
 
 export async function addUserToEquationMatch(
