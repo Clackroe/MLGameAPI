@@ -96,8 +96,9 @@ export function calculateUserRankings(users: userMatchRating[]): ratedUserMatch[
   // Create new user objects with updated data while preserving the IDs
   const newUsersWithIds = users.map((userWithId, index) => {
 
+  // Erin - Assign the value of 'title' based on if the new ranking is less than the max of a range
     let title = "";
-    const compare = ordinal(newRankings[index][0])
+    const compare = ordinal(newRankings[index][0]) * 1000; // multiply by 1000 to get "rank" from rating
     for(let i = 0; i < rankTitles.length; i++) {
       if(compare < rankTitles[i].max) {
         if(compare > 35000) {
