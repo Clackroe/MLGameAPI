@@ -115,7 +115,7 @@ export function calculateUserRankings(users: userMatchRating[]): ratedUserMatch[
       mu_after: newRankings[index][0].mu,
       sigma_after: newRankings[index][0].sigma,
       ranking: ordinal(newRankings[index][0]),
-      rank_title: "POOOPie",
+      rank_title: title,
     };
 
     return updatedUser;
