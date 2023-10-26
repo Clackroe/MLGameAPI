@@ -604,7 +604,7 @@ export async function updateEquationMatchUserMuSigma(eqMatchID: string) {
   const match = await getEquationMatchById(eqMatchID);
   const isNotRanked = match.type === "Practice";
     try {
-      if(isNotRanked) {
+      if(!isNotRanked) {
       const ratings = await getUserMatchRatings(eqMatchID);
       await updateUserScores(ratings);
       };
