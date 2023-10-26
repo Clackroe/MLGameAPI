@@ -145,7 +145,7 @@ model User {
   totalEqMatches      Int                   @default(0)
   totalEqMatchesWon   Int                   @default(0)
   totalEqMatchesLost  Int?                  @default(0)
-  current_eq          String?               @db.Uuid
+  current_eq_id       String?               @db.Uuid
   Account             Account[]
   Equation            Equation[]
   Session             Session[]
