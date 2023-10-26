@@ -56,7 +56,7 @@ const rankTitles = [
   {max: 27000, title: "Grand Champ 1"},
   {max: 31000, title: "Grand Champ 2"},
   {max: 35000, title: "Grand Champ 3"},
-  {title: "Legend"}
+  {max: Number.POSITIVE_INFINITY, title: "Legend"}
 ]
 
 
