@@ -602,9 +602,9 @@ export async function getEquationMatchesByUserId(id: string) {
 //Erin - if EquationMatch.type is ranked, update ratings/scores, if not then just update status of match
 export async function updateEquationMatchUserMuSigma(eqMatchID: string) {
   const match = await getEquationMatchById(eqMatchID);
-  const isNotRanked = match.type === "Practice";
+  const isRanked = match.type === "Ranked";
     try {
-      if(!isNotRanked) {
+      if(isRanked) {
       const ratings = await getUserMatchRatings(eqMatchID);
       await updateUserScores(ratings);
       };
